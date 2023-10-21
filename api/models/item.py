@@ -6,5 +6,5 @@ class Item(BaseModel):
     image: str
     video: str
     tag: str = None
-    dropoffPoint_id: int
-    mail: str
+    dropoffPoint_id: int = None
+    mail: str = None
