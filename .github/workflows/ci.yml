@@ -1,0 +1,22 @@
+name: Docker Image CI
+
+on: workflow_dispatch
+
+jobs:
+
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Login on DockerHub
+      env:
+        DOCKER_USERNAME: ${{secrets.DOCKERHUB_USERNAME}}
+        DOCKER_PASSWORD: ${{secrets.DOCKERHUB_PASSWORD}}
+      run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
+      
+    - name: Build the Docker image
+      run: docker build -t uachado/inventory-api .
+    - name: Push image to DockerHub
+      run: docker push uachado/inventory-api:latest
