@@ -10,4 +10,4 @@ EXPOSE 8000
 
 WORKDIR /code/api
 
-CMD ["python3", "main.py"]
+CMD ["uvicorn", "main:app"]
