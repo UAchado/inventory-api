@@ -18,7 +18,7 @@ services:
       retries: 10
     restart: always
 
-  web:
+  api:
     build: .
     command: uvicorn main:app --host 0.0.0.0 --reload
     volumes:

@@ -1,52 +1,45 @@
-import requests
+from fastapi.testclient import TestClient
+from unittest.mock import patch
+from api import main
 
-# Define the base URL for the FastAPI application
-BASE_URL = "http://localhost:8000"                  #TODO MockItems
+client = TestClient(main.app)
 
-# Test GET request for all items                    #TODO MockItems
-def test_get_all_items():
-    response = requests.get(f"{BASE_URL}/items")
+def test_base():
+    response = client.get("/")
     assert response.status_code == 200
+    assert response.json() == {"response": "Hello World!"}
 
-# Test POST request for creating an item            #TODO MockItems
-def test_create_item_personnel():
-    data = {
-        "description": "description1",
-        "image": "image1.jpg",
-        "video": "video1.mp4",
-        "tag": "tag1",
-        "dropoffPoint_id": 1,
-        "mail": None
-    }
-    response = requests.post(f"{BASE_URL}/items", json=data)
+@patch("api.main.crud.get_items")
+def test_get_all_items(mock_get_items):
+    mock_items = [
+        {"id": 1, "description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"},
+        {"id": 2, "description": "item2", "tag": "tag2", "image": "image2", "state": "state2", "dropoffPoint_id": 2, "mail": "mail2"}
+    ]
+
+    mock_get_items.return_value = mock_items
+    
+    response = client.get("/items/")
     assert response.status_code == 200
-    assert response.json()["description"] == data["description"]
-    assert response.json()["image"] == data["image"]
-    assert response.json()["video"] == data["video"]
-    assert response.json()["tag"] == data["tag"]
-    assert response.json()["dropoffPoint_id"] == data["dropoffPoint_id"]
-    assert response.json()["mail"] == data["mail"]
+    assert response.json() == mock_items
 
-# def test_create_item_user():                      #TODO MockItems
-#     data = {
-#         "description": "description1",
-#         "image": "image1.jpg",
-#         "video": "video1.mp4",
-#         "tag": "tag1",
-#         "dropoffPoint_id": None,
-#         "mail": "mail1"
-#     }
-#     response = requests.post(f"{BASE_URL}/items", json=data)
-#     assert response.status_code == 200
-#     assert response.json()["description"] == data["description"]
-#     assert response.json()["image"] == data["image"]
-#     assert response.json()["video"] == data["video"]
-#     assert response.json()["tag"] == data["tag"]
-#     assert response.json()["dropoffPoint_id"] == data["dropoffPoint_id"]
-#     assert response.json()["mail"] == data["mail"]
+@patch("api.main.crud.get_item_by_id")
+@patch("api.main.crud.create_item")
+def test_create_item(mock_create_item, mock_get_item_by_id):
+    mock_get_item_by_id.return_value = None
+    mock_item = {"id": 1, "description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"}
+    mock_create_item.return_value = mock_item
+    
+    response = client.post("/items/", json = {"description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"})
+    assert response.status_code == 201
+    assert response.json() == mock_item
 
-# Run the tests
-if __name__ == "__main__":
-    test_get_all_items()
-    test_create_item_personnel()
-    # test_create_item_user()
+@patch("api.main.crud.get_item_by_id")
+@patch("api.main.crud.delete_item")
+def test_delete_item(mock_delete_item, mock_get_item_by_id):
+    mock_item = {"id": 1, "description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"}
+    mock_get_item_by_id.return_value = mock_item
+    mock_delete_item.return_value = "OK"
+    
+    response = client.delete("/items/id/1")
+    assert response.status_code == 200
+    assert response.json() == {"message": "Item deleted"}

@@ -5,7 +5,7 @@ class ItemBase(BaseModel):
     tag: str
     image: str
     mail: str = None
-    dropoffPoint_id: str = None
+    dropoffPoint_id: int = None
     state: str
 
 class ItemCreate(ItemBase):
@@ -14,5 +14,5 @@ class ItemCreate(ItemBase):
 class Item(ItemBase):
     id: int
 
-    class Config:
-        orm_mode = True
+    class ConfigDict:
+        from_attributes = True
