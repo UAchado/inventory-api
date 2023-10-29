@@ -34,6 +34,17 @@ def test_create_item(mock_create_item, mock_get_item_by_id):
     assert response.json() == mock_item
 
 @patch("api.main.crud.get_item_by_id")
+@patch("api.main.crud.retrieve_item")
+def test_retrieve_item(mock_create_item, mock_get_item_by_id):
+    mock_get_item_by_id.return_value = None
+    mock_item = {"id": 1, "description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": None}
+    mock_create_item.return_value = mock_item
+    
+    response = client.put("/items/retrieve/", json = {"description": "item1", "tag": "tag1", "image": "image1", "state": "retrieved", "dropoffPoint_id": None, "mail": None})
+    assert response.status_code == 200
+    assert response.json() == mock_item
+
+@patch("api.main.crud.get_item_by_id")
 @patch("api.main.crud.delete_item")
 def test_delete_item(mock_delete_item, mock_get_item_by_id):
     mock_item = {"id": 1, "description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"}
