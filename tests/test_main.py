@@ -4,7 +4,7 @@ from api import main
 
 client = TestClient(main.app)
 
-invalid_id_message = "INVALID ID FORMAT"
+invalid_id_message = {'detail' : 'INVALID ID FORMAT'}
 
 def test_base():
     response = client.get("/v1/")
