@@ -4,6 +4,8 @@ from api import main
 
 client = TestClient(main.app)
 
+invalid_id_message = "INVALID ID FORMAT"
+
 def test_base():
     response = client.get("/v1/")
     assert response.status_code == 200
@@ -33,7 +35,7 @@ def test_get_item_by_id(mock_get_item_by_id):
 
     response = client.get("/v1/items/id/abc")
     assert response.status_code == 400
-    assert response.json() == {"detail": "INVALID ID FORMAT"}
+    assert response.json() == invalid_id_message
 
     mock_get_item_by_id.return_value = None
     response = client.get("/v1/items/id/999")
@@ -54,7 +56,7 @@ def test_retrieve_item(mock_retrieve_item, mock_get_item_by_id):
 
     response = client.get("/v1/items/retrieve/abc")
     assert response.status_code == 400
-    assert response.json() == {"detail": "INVALID ID FORMAT"}
+    assert response.json() == invalid_id_message
 
     mock_retrieve_item.return_value = None
     response = client.get("/v1/items/retrieve/999")
@@ -85,7 +87,7 @@ def test_delete_item(mock_delete_item, mock_get_item_by_id):
 
     response = client.delete("/v1/items/id/abc")
     assert response.status_code == 400
-    assert response.json() == {"detail": "INVALID ID FORMAT"}
+    assert response.json() == invalid_id_message
 
     mock_delete_item.return_value = None
     response = client.delete("/v1/items/id/999")

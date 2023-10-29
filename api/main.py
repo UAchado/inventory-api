@@ -13,6 +13,9 @@ else:
 
 app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
 
+invalid_id_message = "INVALID ID FORMAT"
+item_not_found_message = "ITEM NOT FOUND"
+
 def get_db():
     db = database.SessionLocal()
     try:
@@ -33,11 +36,11 @@ def get_item(item_id: str, db: Session = Depends(get_db)):
     try:
         item_id = int(item_id)
     except ValueError:
-        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = "INVALID ID FORMAT")
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = invalid_id_message)
     
     item = crud.get_item_by_id(db = db, id = item_id)
     if not item:
-        raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = "ITEM NOT FOUND")
+        raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
 @app.get("/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrived' by its ID.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
@@ -45,11 +48,11 @@ def retrieve_item(item_id: str, db: Session = Depends(get_db)):
     try:
         item_id = int(item_id)
     except ValueError:
-        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = "INVALID ID FORMAT")
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = invalid_id_message)
     
     item = crud.retrieve_item(db = db, id = item_id)
     if not item:
-        raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = "ITEM NOT FOUND")
+        raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
 @app.post("/v1/items/", response_description = "Create/Insert a new item.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
@@ -61,10 +64,10 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
     try:
         item_id = int(item_id)
     except:
-        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = "INVALID ID FORMAT")
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = invalid_id_message)
     
     if crud.delete_item(db, item_id) == None:
-        raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = "ITEM NOT FOUND")
+        raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return {"message": "ITEM DELETED"}
 
 if __name__  == '__main__':
