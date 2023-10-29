@@ -1,12 +1,13 @@
 from pydantic import BaseModel
+from typing import Optional
 
 class ItemBase(BaseModel):
     description: str
     tag: str
     image: str
-    mail: str = None
-    dropoffPoint_id: int = None
     state: str
+    dropoffPoint_id: Optional[int]
+    mail: Optional[str]
 
 class ItemCreate(ItemBase):
     pass
@@ -16,3 +17,23 @@ class Item(ItemBase):
 
     class ConfigDict:
         from_attributes = True
+        schema_extra = {
+            "example_1": {
+                "id" : 1,
+                "description": "Someone found a amazing pink console wih a sticker",
+                "tag": "console",
+                "image": "link_to_image",
+                "state": "retrieved",
+                "dropoffPoint_id": 1,
+                "mail": None
+            },
+            "example_2": {
+                "id" : 1,
+                "description": "I lost an amazing pink console wih a sticker",
+                "tag": "console",
+                "image": "link_to_image",
+                "state": "searching",
+                "dropoffPoint_id": None,
+                "mail": "my_mail"
+            }
+        }
