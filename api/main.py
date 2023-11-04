@@ -43,6 +43,10 @@ def get_item(item_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
+@app.get("/v1/items/tag/{item_tag}", response_description = "Get items by tag.", response_model = list[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
+def get_item(item_tag: str, db: Session = Depends(get_db)):
+    return crud.get_items_by_tag(db = db, tag = item_tag)
+
 @app.get("/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrived' by its ID.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
 def retrieve_item(item_id: str, db: Session = Depends(get_db)):
     try:
