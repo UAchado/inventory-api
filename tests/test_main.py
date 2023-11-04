@@ -41,6 +41,22 @@ def test_get_item_by_id(mock_get_item_by_id):
     response = client.get("/v1/items/id/999")
     assert response.status_code == 204
 
+@patch("api.main.crud.get_items_by_tag")
+def test_get_items_by_tag(mock_get_items_by_tag):
+    mock_items = [
+        {"id": 1, "description": "item1", "tag": "tag", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"},
+        {"id": 2, "description": "item2", "tag": "tag", "image": "image2", "state": "state2", "dropoffPoint_id": 2, "mail": "mail2"}
+    ]
+    
+    mock_get_items_by_tag.return_value = mock_items
+    response = client.get("/v1/items/tag/tag")
+    assert response.status_code == 200
+    assert response.json() == mock_items
+
+    mock_get_items_by_tag.return_value = []
+    response = client.get("/v1/items/tag/abc")
+    assert response.status_code == 200
+    assert response.json() == []
 
 @patch("api.main.crud.get_item_by_id")
 @patch("api.main.crud.retrieve_item")

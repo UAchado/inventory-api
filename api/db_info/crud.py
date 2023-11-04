@@ -8,6 +8,9 @@ def get_items(db: Session):
 def get_item_by_id(db: Session, id: int):
     return db.query(models.Item).filter(models.Item.id == id).first()
 
+def get_items_by_tag(db: Session, tag: str):
+    return db.query(models.Item).filter(models.Item.tag == tag).all()
+
 def create_item(db: Session, new_item: schemas.ItemCreate):
     db_item = models.Item(description = new_item.description, 
                           tag = new_item.tag, 
