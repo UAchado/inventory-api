@@ -1,10 +1,9 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 
-from .database import Base
+from . import database
 
-
-class Item(Base):
+class Item(database.Base):
     __tablename__ = "items"
 
     id = Column(Integer, primary_key = True, index = True)

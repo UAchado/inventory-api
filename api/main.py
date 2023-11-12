@@ -1,15 +1,15 @@
 import uvicorn
+import os
+
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
+from dotenv import load_dotenv, dotenv_values
 
-import os
-if os.environ.get("IN_DOCKER_CONTAINER"):
-    from db_info import crud, database, schemas, models
+ENV_FILE_PATH = os.getenv("ENV_FILE_PATH")
+load_dotenv(ENV_FILE_PATH)
 
-    models.Base.metadata.create_all(bind=database.engine)
-else:
-    from .db_info import crud, database, schemas
+from db_info import crud, database, schemas, models
+database.Base.metadata.create_all(bind = database.engine)
 
 app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
 
