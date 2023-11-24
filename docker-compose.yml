@@ -1,28 +1,28 @@
 version: '3.1'
 
 services:
-  db:
+  inventory-db:
     image: mysql:5.7
     ports:
       - 3306:3306
     volumes:
       - db_data:/var/lib/mysql
     env_file:
-      - .env.dev
+      - .env.devdb
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       timeout: 5s
       retries: 10
     restart: always
 
-  api:
+  inventory-api:
     build:
       context: .
       dockerfile: Dockerfile.dev
     ports:
       - 8000:8000
     depends_on:
-      db:
+      inventory-db:
         condition: service_healthy
     restart: always
     environment:

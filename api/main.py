@@ -75,4 +75,4 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
     return {"message": "ITEM DELETED"}
 
 if __name__  == '__main__':
-    uvicorn.run(app, host = 'localhost', port = 8000)
+    uvicorn.run(app, host = '0.0.0.0', port = 8000)
