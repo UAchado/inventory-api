@@ -9,4 +9,4 @@ EXPOSE 8000
 
 ENV ENV_FILE_PATH=../.env.prod
 
-CMD ["uvicorn", "main:app"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
