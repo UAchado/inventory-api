@@ -9,8 +9,12 @@ class ItemBase(BaseModel):
     dropoffPoint_id: Optional[int]
     mail: Optional[str]
 
-class ItemCreate(ItemBase):
-    pass
+class ItemCreate(BaseModel):
+    description: str
+    tag: str
+    image: str
+    dropoffPoint_id: Optional[int]
+    mail: Optional[str]
 
 class Item(ItemBase):
     id: int

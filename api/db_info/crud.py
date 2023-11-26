@@ -28,18 +28,28 @@ def contact_by_email(db: Session, new_item: schemas.ItemCreate):
 def create_item(db: Session, new_item: schemas.ItemCreate):
     
     # Get all the items with the same tag
+    db_item = None
 
-    if new_item.tag != None and new_item.dropoffPoint_id != None:
+    if new_item.tag != None and new_item.dropoffPoint_id != None :
         contact_by_email(db, new_item)
 
-    # Inset the new item in the database
+        # Inset the new item in the database
 
-    db_item = models.Item(description = new_item.description, 
-                          tag = new_item.tag, 
-                          image = new_item.image, 
-                          state = new_item.state,
-                          dropoffPoint_id = new_item.dropoffPoint_id, 
-                          mail = new_item.mail)
+        db_item = models.Item(description = new_item.description, 
+            tag = new_item.tag, 
+            image = new_item.image, 
+            state = "stored",
+            dropoffPoint_id = new_item.dropoffPoint_id, 
+            mail = None)
+        
+    elif new_item.mail != None and new_item.dropoffPoint_id == None:
+        db_item = models.Item(description = new_item.description, 
+            tag = new_item.tag, 
+            image = new_item.image, 
+            state = "reported",
+            dropoffPoint_id = None, 
+            mail = new_item.mail)
+
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
