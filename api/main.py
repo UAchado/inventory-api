@@ -43,6 +43,10 @@ def get_item(item_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
+@app.get("/v1/items/tags", response_description = "Get the list of possible tags.", response_model = list[str], tags = ["Items"], status_code = status.HTTP_200_OK)               # UAC-44
+def get_all_tags():
+    return ["Todos","Portáteis","Telemóveis","Tablets","Auscultadores/Fones","Carregadores","Pen drives","Câmaras","Livros","Cadernos","Material de escritório","Carteiras","Chaves","Cartão","Óculos","Joalharia","Casacos","Chapéus/Bonés","Cachecóis","Luvas","Mochilas","Equipamento desportivo","Garrafas de água","Guarda-chuvas","Instrumentos musicais","Material de arte","Bagagem","Produtos de maquilhagem","Artigos de higiene","Medicamentos"]
+
 @app.get("/v1/items/tag/{item_tag}", response_description = "Get items by tag.", response_model = list[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_item(item_tag: str, db: Session = Depends(get_db)):
     return crud.get_items_by_tag(db = db, tag = item_tag)

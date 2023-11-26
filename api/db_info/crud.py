@@ -11,7 +11,29 @@ def get_item_by_id(db: Session, id: int):
 def get_items_by_tag(db: Session, tag: str):
     return db.query(models.Item).filter(models.Item.tag == tag).all()
 
+def contact_by_email(db: Session, new_item: schemas.ItemCreate):
+    items = [
+        item for item in get_items_by_tag(db, new_item.tag)
+        if item.dropoffPoint_id == None and item.mail != None
+    ]
+    for item in items:
+        notified_mails = []
+        if item.mail not in notified_mails:
+            message = f"A item classified as {new_item.tag} has been found in {new_item.dropoffPoint_id}. Take a look it might be yours!"
+
+            # TODO: Contact using e-mail account
+
+            notified_mails.append(item.mail)
+
 def create_item(db: Session, new_item: schemas.ItemCreate):
+    
+    # Get all the items with the same tag
+
+    if new_item.tag != None and new_item.dropoffPoint_id != None:
+        contact_by_email(db, new_item)
+
+    # Inset the new item in the database
+
     db_item = models.Item(description = new_item.description, 
                           tag = new_item.tag, 
                           image = new_item.image, 

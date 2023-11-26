@@ -41,6 +41,11 @@ def test_get_item_by_id(mock_get_item_by_id):
     response = client.get("/v1/items/id/999")
     assert response.status_code == 204
 
+def test_base():
+    response = client.get("/v1/items/tags")
+    assert response.status_code == 200
+    assert response.json() == ["Todos","Portáteis","Telemóveis","Tablets","Auscultadores/Fones","Carregadores","Pen drives","Câmaras","Livros","Cadernos","Material de escritório","Carteiras","Chaves","Cartão","Óculos","Joalharia","Casacos","Chapéus/Bonés","Cachecóis","Luvas","Mochilas","Equipamento desportivo","Garrafas de água","Guarda-chuvas","Instrumentos musicais","Material de arte","Bagagem","Produtos de maquilhagem","Artigos de higiene","Medicamentos"]
+
 @patch("api.main.crud.get_items_by_tag")
 def test_get_items_by_tag(mock_get_items_by_tag):
     mock_items = [
@@ -80,8 +85,10 @@ def test_retrieve_item(mock_retrieve_item, mock_get_item_by_id):
 
 
 @patch("api.main.crud.get_item_by_id")
+@patch("api.main.crud.contact_by_email")
 @patch("api.main.crud.create_item")
-def test_create_item(mock_create_item, mock_get_item_by_id):
+def test_create_item(mock_create_item, mock_contact_by_email, mock_get_item_by_id):
+    mock_contact_by_email.return_value = None
     mock_get_item_by_id.return_value = None
     mock_item = {"id": 1, "description": "item1", "tag": "tag1", "image": "image1", "state": "state1", "dropoffPoint_id": 1, "mail": "mail1"}
     mock_create_item.return_value = mock_item
