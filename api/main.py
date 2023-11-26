@@ -1,6 +1,7 @@
 import uvicorn
 import os
 
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from fastapi import FastAPI, Depends, HTTPException, status
 from dotenv import load_dotenv, dotenv_values
@@ -12,6 +13,14 @@ from db_info import crud, database, schemas, models
 database.Base.metadata.create_all(bind = database.engine)
 
 app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allows all origins to make requests
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 invalid_id_message = "INVALID ID FORMAT"
 item_not_found_message = "ITEM NOT FOUND"
