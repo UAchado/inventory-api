@@ -6,9 +6,7 @@ on:
       - main
 
 jobs:
-
   test-and-build:
-
     runs-on: ubuntu-latest
 
     services:
@@ -43,14 +41,24 @@ jobs:
       env:
         DATABASE_URL: mysql+mysqlconnector://user:password@localhost:3306/testdb
       run: pytest
-      
-    - name: Login on DockerHub
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-west-1
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
       env:
-        DOCKER_USERNAME: ${{secrets.DOCKERHUB_USERNAME}}
-        DOCKER_PASSWORD: ${{secrets.DOCKERHUB_PASSWORD}}
-      run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
-      
-    - name: Build the Docker image
-      run: docker build -t uachado/inventory-api -f Dockerfile.prod .
-    - name: Push image to DockerHub
-      run: docker push uachado/inventory-api:latest
+        ECR_REGISTRY: ${{ vars.AWS_ECR_REPO }}
+        ECR_REPOSITORY: "inventory-api"
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.prod .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
