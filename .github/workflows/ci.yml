@@ -57,7 +57,7 @@ jobs:
       env:
         ECR_REGISTRY: ${{ vars.AWS_ECR_REPO }}
         ECR_REPOSITORY: "inventory-api"
-        IMAGE_TAG: ${{ github.sha }}
+        IMAGE_TAG: latest
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.prod .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
