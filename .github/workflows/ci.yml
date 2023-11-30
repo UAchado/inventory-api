@@ -55,7 +55,7 @@ jobs:
 
     - name: Build, tag, and push image to Amazon ECR
       env:
-        ECR_REGISTRY: ${{ vars.AWS_ECR_REPO }}
+        ECR_REGISTRY: ${{ vars.AWS_ECR_URL }}
         ECR_REPOSITORY: "inventory-api"
         IMAGE_TAG: latest
       run: |
