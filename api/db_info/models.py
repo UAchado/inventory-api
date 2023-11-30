@@ -13,3 +13,5 @@ class Item(database.Base):
     state = Column(String(50))
     dropoffPoint_id = Column(Integer, nullable = True)
     mail = Column(String(100), nullable = True)
+    retrieved_email = Column(String(100), nullable = True)
+    retrieved_date = Column(String(100), nullable = True)

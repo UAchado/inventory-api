@@ -8,6 +8,8 @@ class ItemBase(BaseModel):
     state: str
     dropoffPoint_id: Optional[int]
     mail: Optional[str]
+    retrieved_email: Optional[str]
+    retrieved_date: Optional[str]
 
 class ItemCreate(BaseModel):
     description: str
@@ -15,6 +17,9 @@ class ItemCreate(BaseModel):
     image: str
     dropoffPoint_id: Optional[int]
     mail: Optional[str]
+
+class Email(BaseModel):
+    email: str
 
 class Item(ItemBase):
     id: int
@@ -29,15 +34,19 @@ class Item(ItemBase):
                 "image": "link_to_image",
                 "state": "retrieved",
                 "dropoffPoint_id": 1,
-                "mail": None
+                "mail": None,
+                "retrieved_email": "michelle.diaz@ua.pt",
+                "retrieved_date": None,
             },
             "example_2": {
                 "id" : 1,
                 "description": "I lost an amazing pink console wih a sticker",
                 "tag": "console",
                 "image": "link_to_image",
-                "state": "searching",
+                "state": "reported",
                 "dropoffPoint_id": None,
-                "mail": "my_mail"
+                "mail": "my_mail",
+                "retrieved_email": None,
+                "retrieved_date": None
             }
         }
