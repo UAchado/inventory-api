@@ -1,3 +1,4 @@
+from typing import List
 import uvicorn
 import os
 
@@ -32,16 +33,20 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/v1/")
+@app.get("/v1")
 def base():
     return {"response": "Hello World!"}
 
-@app.get("/v1/items/", response_description = "Get the list of existing items.", response_model = list[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)               # UAC-44
+# GET ALL ITEMS
+
+@app.get("/v1/items", response_description = "Get the list of existing items.", response_model = List[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)               # UAC-44
 def get_all_items(db: Session = Depends(get_db)):
     return crud.get_items(db)
 
+# GET ITEM BY ID
+
 @app.get("/v1/items/id/{item_id}", response_description = "Get a specific item by its ID.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_item(item_id: str, db: Session = Depends(get_db)):
+def get_item_by_id(item_id: str, db: Session = Depends(get_db)):
     try:
         item_id = int(item_id)
     except ValueError:
@@ -52,20 +57,31 @@ def get_item(item_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
-@app.get("/v1/items/tags", response_description = "Get the list of possible tags.", response_model = list[str], tags = ["Items"], status_code = status.HTTP_200_OK)               # UAC-44
+# GET ITEM TAGS LIST
+
+@app.get("/v1/items/tags", response_description = "Get the list of all tags.", response_model = List[str], tags = ["Items"], status_code = status.HTTP_200_OK)               # UAC-44
 def get_all_tags():
     return ["Todos","Portáteis","Telemóveis","Tablets","Auscultadores/Fones","Carregadores","Pen drives","Câmaras","Livros","Cadernos","Material de escritório","Carteiras","Chaves","Cartão","Óculos","Joalharia","Casacos","Chapéus/Bonés","Cachecóis","Luvas","Mochilas","Equipamento desportivo","Garrafas de água","Guarda-chuvas","Instrumentos musicais","Material de arte","Bagagem","Produtos de maquilhagem","Artigos de higiene","Medicamentos"]
 
-@app.get("/v1/items/tag/{item_tag}", response_description = "Get items by tag.", response_model = list[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_items_by_tag(item_tag: str, db: Session = Depends(get_db)):
-    return crud.get_items_by_tag(db = db, tag = item_tag)
+# GET ITEMS BY NOT AUTHENTICATED USER
 
-@app.get("/v1/items/state/{item_state}", response_description = "Get items by state.", response_model = list[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_items_by_state(item_state: str, db: Session = Depends(get_db)):
-    return crud.get_items_by_state(db = db, state = item_state)
+@app.post("/v1/items/stored", response_description = "Get currently active items by filter.", response_model = List[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
+def get_stored_items(filter: schemas.InputFilter, db: Session = Depends(get_db)):
+    return crud.get_stored_items(db = db, filter = filter.filter)
 
-@app.put("/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrived' by its ID.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
-def retrieve_item(item_id: str, email : schemas.Email, db: Session = Depends(get_db)):
+@app.put("/v1/items/point/{dropoffPoint_id}", response_description = "Get items on a drop-off point by filter.", response_model = List[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
+def get_dropoffPoint_items(dropoffPoint_id: str, filter: schemas.InputFilter, db: Session = Depends(get_db)):
+    try:
+        dropoffPoint_id = int(dropoffPoint_id)
+    except ValueError:
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = invalid_id_message)
+    
+    return crud.get_dropoffPoint_items(db = db, dropoffPoint_id = dropoffPoint_id, filter = filter.filter)
+
+# MARK ITEM AS RETRIEVED
+
+@app.put("/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrieved' by its ID.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
+def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_db)):
     try:
         item_id = int(item_id)
     except ValueError:
@@ -76,9 +92,19 @@ def retrieve_item(item_id: str, email : schemas.Email, db: Session = Depends(get
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
-@app.post("/v1/items/", response_description = "Create/Insert a new item.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
+# CREATE A NEW ITEM
+
+@app.post("/v1/items/create", response_description = "Create/Insert a new item.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
 def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)):
     return crud.create_item(db = db, new_item = item)
+
+# REPORT A NEW ITEM
+
+@app.post("/v1/items/report", response_description = "Report a new item.", response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
+def report_item(item: schemas.ItemReport, db: Session = Depends(get_db)):
+    return crud.report_item(db = db, new_item = item)
+
+# DELETE EXISTING ITEM
 
 @app.delete("/v1/items/id/{item_id}", response_description = "Delete a specific item by its ID.", tags = ["Items"], status_code = status.HTTP_200_OK)
 def delete_item(item_id: str, db: Session = Depends(get_db)):

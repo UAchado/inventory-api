@@ -12,6 +12,6 @@ class Item(database.Base):
     image = Column(String(500))
     state = Column(String(50))
     dropoffPoint_id = Column(Integer, nullable = True)
-    mail = Column(String(100), nullable = True)
+    report_email = Column(String(100), nullable = True)
     retrieved_email = Column(String(100), nullable = True)
     retrieved_date = Column(String(100), nullable = True)
