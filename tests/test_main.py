@@ -2,6 +2,8 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch
 from api import main
 
+## HELPER COMPONENTS
+
 client = TestClient(main.app)
 
 invalid_id_message = {'detail' : 'INVALID ID FORMAT'}
@@ -19,10 +21,6 @@ urls = {
     "report_item": "/v1/items/report",
     "delete_item": "/v1/items/id"
 }
-
-## UNIT TESTS
-
-
 
 ## INTEGRATION TESTS
 

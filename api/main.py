@@ -110,7 +110,7 @@ def report_item(item: schemas.ItemReport, db: Session = Depends(get_db)):
 def delete_item(item_id: str, db: Session = Depends(get_db)):
     try:
         item_id = int(item_id)
-    except:
+    except ValueError:
         raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = invalid_id_message)
     
     if crud.delete_item(db, item_id) == None:
