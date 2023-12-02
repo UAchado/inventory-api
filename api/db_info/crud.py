@@ -39,13 +39,13 @@ def get_stored_items(db: Session, filter: dict):
     query = db.query(models.Item).filter(models.Item.state == "stored")
     if ("tag" in filter):
         query = query.filter(models.Item.tag == filter["tag"])
-    if ("dropoffPoint_id" in filter):
-        query = query.filter(models.Item.dropoffPoint_id == filter["dropoffPoint_id"])
+    if ("dropoff_point_id" in filter):
+        query = query.filter(models.Item.dropoff_point_id == filter["dropoff_point_id"])
     items = query.all()
     return items
 
-def get_dropoffPoint_items(db: Session, dropoffPoint_id: int, filter: dict, update_items: bool = True):
-    query = db.query(models.Item).filter(models.Item.dropoffPoint_id == dropoffPoint_id)
+def get_dropoff_point_items(db: Session, dropoff_point_id: int, filter: dict, update_items: bool = True):
+    query = db.query(models.Item).filter(models.Item.dropoff_point_id == dropoff_point_id)
     if ("tag" in filter):
        query =  query.filter(models.Item.tag == filter["tag"])
     if ("state" in filter):
@@ -64,7 +64,7 @@ def contact_by_email(db: Session, new_item: schemas.ItemCreate):
     for report in stored_reports:
         notified_mails = []
         if report.report_email not in notified_mails:
-            message = f"A item classified as {new_item.tag} has been found in {new_item.dropoffPoint_id}. Take a look it might be yours!"
+            message = f"A item classified as {new_item.tag} has been found in {new_item.dropoff_point_id}. Take a look it might be yours!"
 
             # TODO: Contact using e-report_email account
 
@@ -76,7 +76,7 @@ def create_item(db: Session, new_item: schemas.ItemCreate) -> models.Item:
                           tag = new_item.tag,
                           image = new_item.image,
                           state = "stored",
-                          dropoffPoint_id = new_item.dropoffPoint_id,
+                          dropoff_point_id = new_item.dropoff_point_id,
                           report_email = None,
                           retrieved_email = None,
                           retrieved_date = None)
@@ -94,7 +94,7 @@ def report_item(db: Session, new_item: schemas.ItemReport) -> models.Item:
                           tag = new_item.tag,
                           image = new_item.image,
                           state = "reported",
-                          dropoffPoint_id = None,
+                          dropoff_point_id = None,
                           report_email = new_item.report_email,
                           retrieved_email = None,
                           retrieved_date = None)
@@ -107,7 +107,7 @@ def retrieve_item(db: Session, id: int, retrieved_email: str) -> Optional[models
     db_item = get_item_by_id(db, id)
     if db_item == None:
         return None
-    if db_item.dropoffPoint_id != None and db_item.report_email == None:
+    if db_item.dropoff_point_id != None and db_item.report_email == None:
         db_item.state = "retrieved"
         db_item.retrieved_email = retrieved_email
         db_item.retrieved_date = str(datetime.now())

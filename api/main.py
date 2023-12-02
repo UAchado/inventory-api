@@ -69,14 +69,14 @@ def get_all_tags():
 def get_stored_items(filter: schemas.InputFilter, db: Session = Depends(get_db)):
     return crud.get_stored_items(db = db, filter = filter.filter)
 
-@app.put("/v1/items/point/{dropoffPoint_id}", response_description = "Get items on a drop-off point by filter.", response_model = List[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
-def get_dropoffPoint_items(dropoffPoint_id: str, filter: schemas.InputFilter, db: Session = Depends(get_db)):
+@app.put("/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.", response_model = List[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
+def get_dropoff_point_items(dropoff_point_id: str, filter: schemas.InputFilter, db: Session = Depends(get_db)):
     try:
-        dropoffPoint_id = int(dropoffPoint_id)
+        dropoff_point_id = int(dropoff_point_id)
     except ValueError:
         raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = invalid_id_message)
     
-    return crud.get_dropoffPoint_items(db = db, dropoffPoint_id = dropoffPoint_id, filter = filter.filter)
+    return crud.get_dropoff_point_items(db = db, dropoff_point_id = dropoff_point_id, filter = filter.filter)
 
 # MARK ITEM AS RETRIEVED
 

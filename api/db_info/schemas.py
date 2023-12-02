@@ -1,12 +1,15 @@
 from pydantic import BaseModel
 from typing import Optional
 
+description_created = "Someone found a amazing pink console wih a sticker"
+description_reported = "I lost an amazing pink console wih a sticker"
+
 class ItemBase(BaseModel):
     description: str
     tag: str
     image: str
     state: str
-    dropoffPoint_id: Optional[int]
+    dropoff_point_id: Optional[int]
     report_email: Optional[str]
     retrieved_email: Optional[str]
     retrieved_date: Optional[str]
@@ -19,44 +22,44 @@ class Item(ItemBase):
         schema_extra = {
             "stored_example": {
                 "id" : 1,
-                "description": "Someone found a amazing pink console wih a sticker",
+                "description": description_created,
                 "tag": "console",
                 "image": "image",
                 "state": "stored",
-                "dropoffPoint_id": 1,
+                "dropoff_point_id": 1,
                 "report_email": None,
                 "retrieved_email": None,
                 "retrieved_date": None,
             },
             "reported_example": {
                 "id" : 1,
-                "description": "I lost an amazing pink console wih a sticker",
+                "description": description_reported,
                 "tag": "console",
                 "image": "image",
                 "state": "reported",
-                "dropoffPoint_id": None,
+                "dropoff_point_id": None,
                 "report_email": "my_mail",
                 "retrieved_email": None,
                 "retrieved_date": None
             },
             "retrieved_example": {
                 "id" : 1,
-                "description": "Someone found a amazing pink console wih a sticker",
+                "description": description_created,
                 "tag": "console",
                 "image": "image",
                 "state": "retrieved",
-                "dropoffPoint_id": 1,
+                "dropoff_point_id": 1,
                 "report_email": None,
                 "retrieved_email": "michelle.diaz@ua.pt",
                 "retrieved_date": "today"
             },
             "archived_example": {
                 "id" : 1,
-                "description": "Someone found a amazing pink console wih a sticker",
+                "description": description_created,
                 "tag": "console",
                 "image": "image",
                 "state": "archived",
-                "dropoffPoint_id": 1,
+                "dropoff_point_id": 1,
                 "report_email": None,
                 "retrieved_email": "michelle.diaz@ua.pt",
                 "retrieved_date": "very long time ago"
@@ -67,7 +70,7 @@ class ItemCreate(BaseModel):
     description: str
     tag: str
     image: str
-    dropoffPoint_id: int
+    dropoff_point_id: int
 
 class ItemReport(BaseModel):
     description: str
