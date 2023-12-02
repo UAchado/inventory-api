@@ -16,7 +16,7 @@ app = FastAPI(title = "Inventory API", description = "This API manages the inven
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:80"],  # Allows all origins to make requests
+    allow_origins=["http://localhost:3000", "http://localhost"],  # Allows all origins to make requests
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
