@@ -117,37 +117,37 @@ def test_get_item_by_id(mock_update_retrieved, db):
 
     mock_update_retrieved.return_value = True
 
-    item = crud.get_item_by_id(db = db, id = all_items[0].id, update_items = True)
+    crud.get_item_by_id(db = db, id = all_items[0].id, update_items = True)
 
     mock_update_retrieved.assert_not_called()
     
     # Searching third item (state is retrieved)
-    item = crud.get_item_by_id(db = db, id = all_items[2].id, update_items = True)
+    crud.get_item_by_id(db = db, id = all_items[2].id, update_items = True)
 
     mock_update_retrieved.assert_called()
 
 def get_stored_items(db):
     
     add_items_to_db(db, item_bucket)
-    filter = {}
+    filter_param = {}
     
-    items = crud.get_stored_items(db = db, filter = filter)
+    items = crud.get_stored_items(db = db, filter = filter_param)
     assert len(items) == 1
     assert all(item.state == "stored" for item in items)
     
-    filter = {
+    filter_param = {
         "tag": "tag1"
     }
     
-    items = crud.get_stored_items(db = db, filter = filter)
+    items = crud.get_stored_items(db = db, filter = filter_param)
     assert len(items) == 1
     assert all(item.state == "stored" for item in items)
     
-    filter = {
+    filter_param = {
         "dropoff_point_id": 2
     }
     
-    items = crud.get_stored_items(db = db, filter = filter)
+    items = crud.get_stored_items(db = db, filter = filter_param)
     assert len(items) == 0
     assert all(item.state == "stored" for item in items)
 
@@ -155,34 +155,34 @@ def get_stored_items(db):
 def test_get_dropoff_point_items(mock_update_retrieved, db):
     
     add_items_to_db(db, item_bucket)
-    filter = {}
+    filter_param = {}
     
-    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter_param, update_items = False)
     assert len(items) == 2
     assert all(item.dropoff_point_id == 2 for item in items)
     
-    filter = {
+    filter_param = {
         "tag": "tag2"
     }
     
-    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter_param, update_items = False)
     assert len(items) == 1
     assert all(item.dropoff_point_id == 2 for item in items)
     
-    filter = {
+    filter_param = {
         "state": "stored"
     }
     
-    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter_param, update_items = False)
     assert len(items) == 1
     assert all(item.dropoff_point_id == 2 for item in items)
     
-    filter = {
+    filter_param = {
         "tag": "tag2",
         "state": "stored"
     }
     
-    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter_param, update_items = False)
     assert len(items) == 0
     
     mock_update_retrieved.assert_not_called()
@@ -191,14 +191,14 @@ def test_get_dropoff_point_items(mock_update_retrieved, db):
     
     mock_update_retrieved.return_value = True
     
-    filter = {
+    filter_param = {
         "state": "stored"
     }
-    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = True)
+    crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter_param, update_items = True)
     mock_update_retrieved.assert_not_called()
     
-    filter = {}
-    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = True)
+    filter_param = {}
+    crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter_param, update_items = True)
     mock_update_retrieved.assert_called()
     
 
