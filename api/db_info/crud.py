@@ -47,13 +47,16 @@ def get_stored_items(db: Session, filter: dict):
 def get_dropoff_point_items(db: Session, dropoff_point_id: int, filter: dict, update_items: bool = True):
     query = db.query(models.Item).filter(models.Item.dropoff_point_id == dropoff_point_id)
     if ("tag" in filter):
-       query =  query.filter(models.Item.tag == filter["tag"])
+       query = query.filter(models.Item.tag == filter["tag"])
     if ("state" in filter):
-        if update_items and (filter["state"] in ["retrieved", "archived"]):
-           updating_items = db.query(models.Item).filter(models.Item.state == "retrieved").all()
-           update_retrieved_to_archived_items(db, updating_items) 
         query = query.filter(models.Item.state == filter["state"])
     items = query.all()
+    
+    if update_items and any([item.state in ["retrieved", "archived"] for item in items]):
+        updating_items = [item for item in items if item.state == "retrieved"]
+        update_retrieved_to_archived_items(db, updating_items) 
+        items = query.all()
+    
     return items
 
 def contact_by_email(db: Session, new_item: schemas.ItemCreate):
@@ -107,7 +110,7 @@ def retrieve_item(db: Session, id: int, retrieved_email: str) -> Optional[models
     db_item = get_item_by_id(db, id)
     if db_item == None:
         return None
-    if db_item.dropoff_point_id != None and db_item.report_email == None:
+    if db_item.state == "stored":
         db_item.state = "retrieved"
         db_item.retrieved_email = retrieved_email
         db_item.retrieved_date = str(datetime.now())
