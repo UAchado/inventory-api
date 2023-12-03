@@ -107,8 +107,7 @@ def test_get_item_by_id(mock_update_retrieved, db):
     assert len(all_items) != 0
 
     # Test retrieval of the first item by its actual ID
-    first_item_id = all_items[0].id
-    item = crud.get_item_by_id(db = db, id = first_item_id, update_items = False)
+    item = crud.get_item_by_id(db = db, id = all_items[0].id, update_items = False)
     assert item != None
     assert item.description == all_items[0].description
 
@@ -118,12 +117,12 @@ def test_get_item_by_id(mock_update_retrieved, db):
 
     mock_update_retrieved.return_value = True
 
-    item = crud.get_item_by_id(db = db, id = 1, update_items = True)
+    item = crud.get_item_by_id(db = db, id = all_items[0].id, update_items = True)
 
     mock_update_retrieved.assert_not_called()
     
     # Searching third item (state is retrieved)
-    item = crud.get_item_by_id(db = db, id = 3, update_items = True)
+    item = crud.get_item_by_id(db = db, id = all_items[2].id, update_items = True)
 
     mock_update_retrieved.assert_called()
 
