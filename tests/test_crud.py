@@ -47,7 +47,8 @@ def db():
 
 # FUNCTION get_items
 
-def test_get_items_no_flag(db):
+@patch("api.db_info.crud.update_retrieved_to_archived_items")
+def test_get_items_no_flag(mock_update_retrieved, db):
     
     items = crud.get_items(db = db, update_items = False)
     assert len(items) == 0
@@ -56,39 +57,215 @@ def test_get_items_no_flag(db):
     add_items_to_db(db, item_bucket)
 
     items = crud.get_items(db = db, update_items = False)
-    print(items)
     assert len(items) == 4
-    assert items[0].description == "item_bucket_0"
+    assert items[0].description == item_bucket[0].description
+
+    mock_update_retrieved.assert_not_called()
 
 @patch("api.db_info.crud.update_retrieved_to_archived_items")
 def test_get_items_with_flag(mock_update_retrieved, db):
+
+    # NO ITEMS
+    
     items = crud.get_items(db = db, update_items = True)
     assert len(items) == 0
     assert items == []
 
+    mock_update_retrieved.assert_not_called()
+
+    # NO RETRIEVED ITEMS
+
+    add_items_to_db(db, [item_bucket[0]])
+
+    items = crud.get_items(db = db, update_items = True)
+    assert len(items) == 1
+    assert items[0].state == item_bucket[0].state
+
+    mock_update_retrieved.assert_not_called()
+
+    # RETRIEVED ITEMS TRUE
+
     add_items_to_db(db, [item_bucket[2]])
+    mock_update_retrieved.return_value = True
+
+    items = crud.get_items(db = db, update_items = True)
+    assert len(items) == 2
+    assert items[1].state == item_bucket[2].state
+
+    mock_update_retrieved.assert_called()
+
+@patch("api.db_info.crud.update_retrieved_to_archived_items")
+def test_get_item_by_id(mock_update_retrieved, db):
+
+    item = crud.get_item_by_id(db = db, id = 1, update_items = False)
+    assert item == None
+
+    add_items_to_db(db, item_bucket)
+
+    item = crud.get_item_by_id(db = db, id = 1, update_items = False)
+    assert item.description == item_bucket[0].description
+
+    mock_update_retrieved.assert_not_called()
+
+    # FLAG TRUE
 
     mock_update_retrieved.return_value = True
-    items = crud.get_items(db = db, update_items = True)
-    print(items)
+
+    item = crud.get_item_by_id(db = db, id = 1, update_items = True)
+    assert item.description == item_bucket[0].description
+
+    mock_update_retrieved.assert_not_called()
+    
+    # Searching third item (state is retrieved)
+    item = crud.get_item_by_id(db = db, id = 3, update_items = True)
+    assert item.description == item_bucket[2].description
+
     mock_update_retrieved.assert_called()
+
+def get_stored_items(db):
+    
+    add_items_to_db(db, item_bucket)
+    filter = {}
+    
+    items = crud.get_stored_items(db = db, filter = filter)
     assert len(items) == 1
+    assert all(item.state == "stored" for item in items)
+    
+    filter = {
+        "tag": "tag1"
+    }
+    
+    items = crud.get_stored_items(db = db, filter = filter)
+    assert len(items) == 1
+    assert all(item.state == "stored" for item in items)
+    
+    filter = {
+        "dropoff_point_id": 2
+    }
+    
+    items = crud.get_stored_items(db = db, filter = filter)
+    assert len(items) == 0
+    assert all(item.state == "stored" for item in items)
+
+@patch("api.db_info.crud.update_retrieved_to_archived_items")
+def test_get_dropoff_point_items(mock_update_retrieved, db):
+    
+    add_items_to_db(db, item_bucket)
+    filter = {}
+    
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    assert len(items) == 2
+    assert all(item.dropoff_point_id == 2 for item in items)
+    
+    filter = {
+        "tag": "tag2"
+    }
+    
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    assert len(items) == 1
+    assert all(item.dropoff_point_id == 2 for item in items)
+    
+    filter = {
+        "state": "stored"
+    }
+    
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    assert len(items) == 1
+    assert all(item.dropoff_point_id == 2 for item in items)
+    
+    filter = {
+        "tag": "tag2",
+        "state": "stored"
+    }
+    
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = False)
+    assert len(items) == 0
+    
+    mock_update_retrieved.assert_not_called()
+    
+    # Flag
+    
+    mock_update_retrieved.return_value = True
+    
+    filter = {
+        "state": "stored"
+    }
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = True)
+    mock_update_retrieved.assert_not_called()
+    
+    filter = {}
+    items = crud.get_dropoff_point_items(db = db, dropoff_point_id = 2, filter = filter, update_items = True)
     mock_update_retrieved.assert_called()
-    assert items[0].state == "retrieved"
+    
 
-# def test_get_items_no_flag(db):
-
-# def test_create_item(db):
-#     # Create a new item using your CRUD function
-#     new_item_data = schemas.ItemCreate(description="Test item",
-#                                        tag="test",
-#                                        image="image.jpg",
-#                                        dropoff_point_id=1)
-#     created_item = crud.create_item(db=db, new_item=new_item_data)
-#     assert created_item.description == "Test item"
-
-#     # Verify that the item was added to the database
-#     items = crud.get_items(db=db)
-#     assert len(items) == 1
-#     assert items[0].description == "Test item"
-
+@patch("api.db_info.crud.contact_by_email")
+def test_create_item(mock_contact_by_email, db):
+    mock_contact_by_email.return_value = None
+    
+    new_item = schemas.ItemCreate(
+        description = "new_item_description",
+        tag = "new_item_tag",
+        image = "new_item_image",
+        dropoff_point_id = 1
+    )
+    
+    item = crud.create_item(db = db, new_item = new_item)
+    assert item != None
+    assert item.description == new_item.description
+    assert item.report_email == None
+    
+def test_report_item(db):
+    
+    new_item = schemas.ItemReport(
+        description = "new_item_description",
+        tag = "new_item_tag",
+        image = "new_item_image",
+        report_email = "new_item_report_email"
+    )
+    
+    item = crud.report_item(db = db, new_item = new_item)
+    assert item != None
+    assert item.report_email == new_item.report_email
+    assert item.dropoff_point_id == None
+    
+def test_retrieve_item(db):
+    
+    add_items_to_db(db, [item_bucket[0]])
+    
+    items = crud.get_items(db = db)
+    assert len(items) == 1
+    
+    item_in_db = items[0]
+    assert item_in_db.state == "stored"
+    assert item_in_db.retrieved_email == None
+    assert item_in_db.retrieved_date == None
+    
+    item = crud.retrieve_item(db = db, id = item_in_db.id, retrieved_email = "retrieved_email")
+    assert item.state == "retrieved"
+    assert item.retrieved_email == "retrieved_email"
+    assert item.retrieved_date != None
+    
+    save_item = item
+    
+    item = crud.retrieve_item(db = db, id = item_in_db.id, retrieved_email = "retrieved_email")
+    assert item.retrieved_date == save_item.retrieved_date
+    
+def test_delete_item(db):
+    
+    items = crud.get_items(db = db)
+    assert len(items) == 0
+    
+    return_value = crud.delete_item(db = db, id = 1)
+    assert return_value == None
+    
+    add_items_to_db(db, [item_bucket[0]])
+    
+    items = crud.get_items(db = db)
+    assert len(items) == 1
+    
+    item_in_db = items[0]
+    return_value = crud.delete_item(db = db, id = item_in_db.id)
+    assert return_value == "OK"
+    
+    items = crud.get_items(db = db)
+    assert len(items) == 0
