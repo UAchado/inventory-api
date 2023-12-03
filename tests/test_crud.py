@@ -103,7 +103,8 @@ def test_get_item_by_id(mock_update_retrieved, db):
     add_items_to_db(db, item_bucket)
 
     item = crud.get_item_by_id(db = db, id = 1, update_items = False)
-    assert item.description != None
+    assert item != None
+    assert item.description == item_bucket[0].description
 
     mock_update_retrieved.assert_not_called()
 
