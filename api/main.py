@@ -43,7 +43,7 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/v1")
+@app.get("/v1/")
 def base():
     return {"response": "Hello World!"}
 
