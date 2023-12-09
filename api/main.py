@@ -119,8 +119,6 @@ def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_
 @app.post("/v1/items/create", response_description = "Create/Insert a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
 def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)) -> schemas.Item:
-    for _ in range(10000):
-        crud.create_item(db = db, new_item = item)
     return crud.create_item(db = db, new_item = item)
 
 # REPORT A NEW ITEM
