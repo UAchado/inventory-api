@@ -46,7 +46,11 @@ def test_get_all_items(mock_get_items):
     
     response = client.get(urls["get_all_items"])
     assert response.status_code == 200
-    assert response.json() == mock_items
+    assert response.json()["items"] == mock_items
+    
+    response = client.get(urls["get_all_items"]+"?page=1&size=1")
+    assert response.status_code == 200
+    assert response.json()["items"] == [mock_items[0]]
 
 # GET ITEM BY ID
 
@@ -87,22 +91,28 @@ def test_get_stored_items(mock_get_stored_items):
     mock_get_stored_items.return_value = mock_items
     response = client.post(urls["get_stored_items"], json = {"filter": {}})
     assert response.status_code == 200
-    assert response.json() == mock_items
+    assert response.json()["items"] == mock_items
+    
+    response = client.post(urls["get_stored_items"]+"?page=1&size=1", json = {"filter": {}})
+    assert response.status_code == 200
+    assert response.json()["items"] == [mock_items[0]]
 
     mock_get_stored_items.return_value = [mock_items[0], mock_items[1]]
     response = client.post(urls["get_stored_items"], json = {"filter": {"tag":"tag1"}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[0], mock_items[1]]
+    assert response.json()["items"] == [mock_items[0], mock_items[1]]
 
     mock_get_stored_items.return_value = [mock_items[1], mock_items[2]]
     response = client.post(urls["get_stored_items"], json = {"filter": {"dropoff_point_id":2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[1], mock_items[2]]
+    assert response.json()["items"] == [mock_items[1], mock_items[2]]
 
     mock_get_stored_items.return_value = [mock_items[2]]
     response = client.post(urls["get_stored_items"], json = {"filter": {"tag":"tag2", "dropoff_point_id": 2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[2]]
+    assert response.json()["items"] == [mock_items[2]]
+    
+    
 
 # GET DROP-OFF POINT ITEMS
 
@@ -118,28 +128,32 @@ def test_get_dropoff_point_items(mock_get_dropoff_point_items):
     mock_get_dropoff_point_items.return_value = mock_items
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {}})
     assert response.status_code == 200
-    assert response.json() == mock_items
+    assert response.json()["items"] == mock_items
+    
+    response = client.put(urls["get_dropoff_point_items_1"]+"?page=1&size=1", json = {"filter": {}})
+    assert response.status_code == 200
+    assert response.json()["items"] == [mock_items[0]]
 
     mock_get_dropoff_point_items.return_value = [mock_items[0], mock_items[1]]
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"tag":"tag1"}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[0], mock_items[1]]
+    assert response.json()["items"] == [mock_items[0], mock_items[1]]
 
     mock_get_dropoff_point_items.return_value = [mock_items[0], mock_items[2]]
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"dropoff_point_id":2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[0], mock_items[2]]
+    assert response.json()["items"] == [mock_items[0], mock_items[2]]
 
     for index, state in enumerate(["stored", "reported", "retrieved", "archived"]):
         mock_get_dropoff_point_items.return_value = [mock_items[index]]
         response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"state":state}})
         assert response.status_code == 200
-        assert response.json() == [mock_items[index]]
+        assert response.json()["items"] == [mock_items[index]]
 
     mock_get_dropoff_point_items.return_value = [mock_items[2]]
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"tag": "tag2", "state": "retrieved", "dropoff_point_id": 2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[2]]
+    assert response.json()["items"] == [mock_items[2]]
 
     response = client.put(urls["get_dropoff_point_items"] + "/abc", json =  {"filter": {}})
     assert response.status_code == 400
