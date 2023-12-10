@@ -118,14 +118,26 @@ def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_
 
 @app.post("/v1/items/create", response_description = "Create/Insert a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
-def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)) -> schemas.Item:
-    return crud.create_item(db = db, new_item = item)
+def create_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
+                dropoff_point_id: int = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
+    item = schemas.ItemCreate(description=description,
+                              tag=tag,
+                              image=image,
+                              dropoff_point_id=dropoff_point_id
+                              )
+    return crud.create_item(db = db, new_item = item) 
 
 # REPORT A NEW ITEM
 
 @app.post("/v1/items/report", response_description = "Report a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
-def report_item(item: schemas.ItemReport, db: Session = Depends(get_db)) -> schemas.Item:
+def report_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
+                report_email: str = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
+    item = schemas.ItemReport(description=description,
+                              tag=tag,
+                              image=image,
+                              report_email=report_email
+                              )
     return crud.report_item(db = db, new_item = item)
 
 # DELETE EXISTING ITEM
