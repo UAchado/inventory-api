@@ -1,3 +1,4 @@
+from io import BytesIO
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 from api import main
@@ -187,7 +188,17 @@ def test_create_item(mock_create_item):
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_create_item.return_value = mock_item
     
-    response = client.post(urls["create_item"], json = {"description": "description", "tag": "tag", "image": None, "dropoff_point_id": 1})
+    fake_file = BytesIO(b"fake image content")
+    fake_file.name = "test.jpg"
+    
+    data = {
+        "description": (None, "description"),
+        "tag": (None, "tag"),
+        "image": (fake_file.name, fake_file, "image/jpeg"),
+        "dropoff_point_id": (None, "1"),
+    }
+    
+    response = client.post(urls["create_item"], files = data)
     assert response.status_code == 201
     assert response.json() == mock_item
 
@@ -198,7 +209,17 @@ def test_report_item(mock_report_item):
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
     mock_report_item.return_value = mock_item
     
-    response = client.post(urls["report_item"], json = {"description": "description", "tag": "tag", "image": None, "report_email": "report_email"})
+    fake_file = BytesIO(b"fake image content")
+    fake_file.name = "test.jpg"
+    
+    data = {
+        "description": (None, "description"),
+        "tag": (None, "tag"),
+        "image": (fake_file.name, fake_file, "image/jpeg"),
+        "report_email": (None, "report_email"),
+    }
+    
+    response = client.post(urls["report_item"], files = data)
     assert response.status_code == 201
     assert response.json() == mock_item
 
