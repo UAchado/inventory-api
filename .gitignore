@@ -161,3 +161,4 @@ cython_debug/
 
 .env*
 test.db
+test_image.html
