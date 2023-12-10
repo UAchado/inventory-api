@@ -1,13 +1,13 @@
-from typing import List, Optional
 import uvicorn
 import os
 
+from typing import List, Optional
 from fastapi_pagination import Page, Params
 from fastapi_pagination.paginator import paginate as base_paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, status, File, Form
 from dotenv import load_dotenv, dotenv_values
 
 ENV_FILE_PATH = os.getenv("ENV_FILE_PATH")
@@ -117,14 +117,14 @@ def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_
 # CREATE A NEW ITEM
 
 @app.post("/v1/items/create", response_description = "Create/Insert a new item.",
-          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
+          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 def create_item(item: schemas.ItemCreate, db: Session = Depends(get_db)) -> schemas.Item:
     return crud.create_item(db = db, new_item = item)
 
 # REPORT A NEW ITEM
 
 @app.post("/v1/items/report", response_description = "Report a new item.",
-          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)                                        # UAC-48
+          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 def report_item(item: schemas.ItemReport, db: Session = Depends(get_db)) -> schemas.Item:
     return crud.report_item(db = db, new_item = item)
 
@@ -141,6 +141,13 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
     if crud.delete_item(db, item_id) == None:
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return {"message": "ITEM DELETED"}
+
+# GET IMAGE FROM S3 BUCKET
+
+@app.get("/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
+            response_model = dict, tags = ["Items"], status_code = status.HTTP_200_OK)
+def get_image_from_s3(image_uuid: str):
+    return crud.get_image_from_s3(image_uuid)
 
 if __name__  == '__main__':
     uvicorn.run(app, host = '0.0.0.0', port = 8000)

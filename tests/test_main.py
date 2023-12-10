@@ -19,7 +19,8 @@ urls = {
     "retrieve_item": "/v1/items/retrieve",
     "create_item": "/v1/items/create",
     "report_item": "/v1/items/report",
-    "delete_item": "/v1/items/id"
+    "delete_item": "/v1/items/id",
+    "get_image": "/v1/image/uuid"
 }
 
 ## INTEGRATION TESTS
@@ -183,10 +184,10 @@ def test_retrieve_item(mock_retrieve_item):
 
 @patch("api.main.crud.create_item")
 def test_create_item(mock_create_item):
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_create_item.return_value = mock_item
     
-    response = client.post(urls["create_item"], json = {"description": "description", "tag": "tag", "image": "image", "dropoff_point_id": 1})
+    response = client.post(urls["create_item"], json = {"description": "description", "tag": "tag", "image": None, "dropoff_point_id": 1})
     assert response.status_code == 201
     assert response.json() == mock_item
 
@@ -194,10 +195,10 @@ def test_create_item(mock_create_item):
 
 @patch("api.main.crud.report_item")
 def test_report_item(mock_report_item):
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
     mock_report_item.return_value = mock_item
     
-    response = client.post(urls["report_item"], json = {"description": "description", "tag": "tag", "image": "image", "report_email": "report_email"})
+    response = client.post(urls["report_item"], json = {"description": "description", "tag": "tag", "image": None, "report_email": "report_email"})
     assert response.status_code == 201
     assert response.json() == mock_item
 
@@ -218,3 +219,13 @@ def test_delete_item(mock_delete_item):
     mock_delete_item.return_value = None
     response = client.delete(urls["delete_item"] + "/999")
     assert response.status_code == 204
+    
+# GET IMAGE FROM S3 BUCKET
+
+@patch("api.main.crud.get_image_from_s3")
+def test_get_image_from_s3(mock_get_image_from_s3):
+    mock_get_image_from_s3.return_value = {"body": "StreamingResponse_template"}
+    
+    response = client.get(urls["get_image"])
+    assert response.status_code == 200
+    assert response.json() == {"body": "StreamingResponse_template"}

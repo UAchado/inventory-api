@@ -1,11 +1,53 @@
+import boto3
+import os
+import uuid
+
 from typing import List, Optional
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-
+from botocore.exceptions import NoCredentialsError
 from . import models, schemas
 
+def get_s3():
+    return boto3.client(
+        's3',
+        aws_access_key_id = os.getenv('AWS_ACCESS_KEY_ID'),
+        aws_secret_access_key = os.getenv('AWS_SECRET_ACCESS_KEY')
+    )
+
+def upload_file_to_s3(file, s3_file_name):
+    s3 = get_s3()
+    try:
+        bucket_name = os.getenv('AWS_BUCKET_NAME')
+        s3.upload_fileobj(file.file, bucket_name, s3_file_name)
+        return s3_file_name
+    except FileNotFoundError:
+        print("ERROR:\t\tFileNotFoundError")
+        return None
+    except NoCredentialsError:
+        print("ERROR:\t\tNoCredentialsError")
+        return None
+    except Exception:
+        return None
+
+def delete_file_from_s3(s3_file_name):
+    s3 = get_s3()
+    try:
+        s3.delete_object(Bucket=os.getenv('AWS_BUCKET_NAME'), Key=s3_file_name)
+        return True
+    except Exception:
+        print("ERROR:\t\tException")
+        return False
+
+def get_image_from_s3(uuid: str):
+    s3_client = get_s3()
+    bucket_name = os.getenv('AWS_BUCKET_NAME')
+
+    response = s3_client.get_object(Bucket=bucket_name, Key=uuid)
+    return StreamingResponse(response['Body'], media_type=response['ContentType'])
+
 def update_retrieved_to_archived_items(db: Session, items: List[models.Item]):
-    print("UPDATING POSSIBLE NOT ARCHIVED ITEMS!")
     flag = False
     update_items = []
     for item in items:
@@ -75,6 +117,9 @@ def contact_by_email(db: Session, new_item: schemas.ItemCreate):
 
 def create_item(db: Session, new_item: schemas.ItemCreate) -> models.Item:
     
+    if new_item.image != None:
+        new_item.image = upload_file_to_s3(new_item.image, str(uuid.uuid4()))
+    
     db_item = models.Item(description = new_item.description,
                           tag = new_item.tag,
                           image = new_item.image,
@@ -83,7 +128,6 @@ def create_item(db: Session, new_item: schemas.ItemCreate) -> models.Item:
                           report_email = None,
                           retrieved_email = None,
                           retrieved_date = None)
-
             
     contact_by_email(db, new_item)
         
@@ -92,6 +136,9 @@ def create_item(db: Session, new_item: schemas.ItemCreate) -> models.Item:
     return db_item
 
 def report_item(db: Session, new_item: schemas.ItemReport) -> models.Item:
+    
+    if new_item.image != None:
+        new_item.image = upload_file_to_s3(new_item.image, str(uuid.uuid4()))
     
     db_item = models.Item(description = new_item.description,
                           tag = new_item.tag,
@@ -122,6 +169,9 @@ def delete_item(db: Session, id: int) -> Optional[str]:
     db_item = get_item_by_id(db, id)
     if db_item == None:
         return None
+    if db_item.image != None:
+        s3_image_file_name = db_item.image.split('/')[-1]
+        delete_file_from_s3(s3_image_file_name)
     db.delete(db_item)
     db.commit()
     return "OK"
