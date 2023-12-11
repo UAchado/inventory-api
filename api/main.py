@@ -27,7 +27,7 @@ def custom_paginate(items, params: Optional[Params] = None):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost"],  # Allows all origins to make requests
+    allow_origins=["*"],  # Allows all origins to make requests
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
