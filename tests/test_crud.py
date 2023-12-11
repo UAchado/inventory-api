@@ -1,5 +1,6 @@
 from typing import List
 from pytest import fixture
+from fastapi import File, UploadFile
 from unittest.mock import patch
 from sqlalchemy.orm import Session
 from api.db_info import schemas, database, crud, models
@@ -202,14 +203,15 @@ def test_get_dropoff_point_items(mock_update_retrieved, db):
     mock_update_retrieved.assert_called()
     
 
+@patch("api.db_info.crud.upload_file_to_s3")
 @patch("api.db_info.crud.contact_by_email")
-def test_create_item(mock_contact_by_email, db):
+def test_create_item(mock_contact_by_email, mock_upload_file_to_s3, db):
     mock_contact_by_email.return_value = None
     
     new_item = schemas.ItemCreate(
         description = "new_item_description",
         tag = "new_item_tag",
-        image = "new_item_image",
+        image = None,
         dropoff_point_id = 1
     )
     
@@ -217,13 +219,30 @@ def test_create_item(mock_contact_by_email, db):
     assert item != None
     assert item.description == new_item.description
     assert item.report_email == None
+    assert item.image == None
     
-def test_report_item(db):
+    mock_upload_file_to_s3.return_value = "image_url_str"
+    
+    new_item = schemas.ItemCreate(
+        description = "new_item_description",
+        tag = "new_item_tag",
+        image = UploadFile(File()),
+        dropoff_point_id = 1
+    )
+    
+    item = crud.create_item(db = db, new_item = new_item)
+    assert item != None
+    assert item.description == new_item.description
+    assert item.report_email == None
+    assert item.image == "image_url_str"
+
+@patch("api.db_info.crud.upload_file_to_s3")
+def test_report_item(mock_upload_file_to_s3, db):
     
     new_item = schemas.ItemReport(
         description = "new_item_description",
         tag = "new_item_tag",
-        image = "new_item_image",
+        image = None,
         report_email = "new_item_report_email"
     )
     
@@ -231,6 +250,22 @@ def test_report_item(db):
     assert item != None
     assert item.report_email == new_item.report_email
     assert item.dropoff_point_id == None
+    assert item.image == None
+    
+    mock_upload_file_to_s3.return_value = "image_url_str"
+    
+    new_item = schemas.ItemReport(
+        description = "new_item_description",
+        tag = "new_item_tag",
+        image = UploadFile(File()),
+        report_email = "new_item_report_email"
+    )
+    
+    item = crud.report_item(db = db, new_item = new_item)
+    assert item != None
+    assert item.report_email == new_item.report_email
+    assert item.dropoff_point_id == None
+    assert item.image == "image_url_str"
     
 def test_retrieve_item(db):
     
@@ -253,8 +288,11 @@ def test_retrieve_item(db):
     
     item = crud.retrieve_item(db = db, id = item_in_db.id, retrieved_email = "retrieved_email")
     assert item.retrieved_date == save_item.retrieved_date
+
+@patch("api.db_info.crud.delete_file_from_s3")
+def test_delete_item(mock_delete_file_from_s3, db):
     
-def test_delete_item(db):
+    mock_delete_file_from_s3.return_value = True
     
     items = crud.get_items(db = db)
     assert len(items) == 0

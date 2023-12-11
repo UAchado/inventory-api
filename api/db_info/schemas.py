@@ -1,3 +1,4 @@
+from fastapi import UploadFile
 from pydantic import BaseModel
 from typing import Optional
 
@@ -7,7 +8,7 @@ description_reported = "I lost an amazing pink console wih a sticker"
 class ItemBase(BaseModel):
     description: str
     tag: str
-    image: str
+    image: Optional[str]
     state: str
     dropoff_point_id: Optional[int]
     report_email: Optional[str]
@@ -69,13 +70,13 @@ class Item(ItemBase):
 class ItemCreate(BaseModel):
     description: str
     tag: str
-    image: str
+    image: Optional[UploadFile]
     dropoff_point_id: int
 
 class ItemReport(BaseModel):
     description: str
     tag: str
-    image: str
+    image: Optional[UploadFile]
     report_email: str
 
 class InputFilter(BaseModel):

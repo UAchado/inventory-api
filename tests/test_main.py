@@ -1,3 +1,4 @@
+from io import BytesIO
 from fastapi.testclient import TestClient
 from unittest.mock import patch
 from api import main
@@ -19,7 +20,8 @@ urls = {
     "retrieve_item": "/v1/items/retrieve",
     "create_item": "/v1/items/create",
     "report_item": "/v1/items/report",
-    "delete_item": "/v1/items/id"
+    "delete_item": "/v1/items/id",
+    "get_image": "/v1/image/uuid"
 }
 
 ## INTEGRATION TESTS
@@ -46,7 +48,11 @@ def test_get_all_items(mock_get_items):
     
     response = client.get(urls["get_all_items"])
     assert response.status_code == 200
-    assert response.json() == mock_items
+    assert response.json()["items"] == mock_items
+    
+    response = client.get(urls["get_all_items"]+"?page=1&size=1")
+    assert response.status_code == 200
+    assert response.json()["items"] == [mock_items[0]]
 
 # GET ITEM BY ID
 
@@ -87,22 +93,28 @@ def test_get_stored_items(mock_get_stored_items):
     mock_get_stored_items.return_value = mock_items
     response = client.post(urls["get_stored_items"], json = {"filter": {}})
     assert response.status_code == 200
-    assert response.json() == mock_items
+    assert response.json()["items"] == mock_items
+    
+    response = client.post(urls["get_stored_items"]+"?page=1&size=1", json = {"filter": {}})
+    assert response.status_code == 200
+    assert response.json()["items"] == [mock_items[0]]
 
     mock_get_stored_items.return_value = [mock_items[0], mock_items[1]]
     response = client.post(urls["get_stored_items"], json = {"filter": {"tag":"tag1"}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[0], mock_items[1]]
+    assert response.json()["items"] == [mock_items[0], mock_items[1]]
 
     mock_get_stored_items.return_value = [mock_items[1], mock_items[2]]
     response = client.post(urls["get_stored_items"], json = {"filter": {"dropoff_point_id":2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[1], mock_items[2]]
+    assert response.json()["items"] == [mock_items[1], mock_items[2]]
 
     mock_get_stored_items.return_value = [mock_items[2]]
     response = client.post(urls["get_stored_items"], json = {"filter": {"tag":"tag2", "dropoff_point_id": 2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[2]]
+    assert response.json()["items"] == [mock_items[2]]
+    
+    
 
 # GET DROP-OFF POINT ITEMS
 
@@ -118,28 +130,32 @@ def test_get_dropoff_point_items(mock_get_dropoff_point_items):
     mock_get_dropoff_point_items.return_value = mock_items
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {}})
     assert response.status_code == 200
-    assert response.json() == mock_items
+    assert response.json()["items"] == mock_items
+    
+    response = client.put(urls["get_dropoff_point_items_1"]+"?page=1&size=1", json = {"filter": {}})
+    assert response.status_code == 200
+    assert response.json()["items"] == [mock_items[0]]
 
     mock_get_dropoff_point_items.return_value = [mock_items[0], mock_items[1]]
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"tag":"tag1"}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[0], mock_items[1]]
+    assert response.json()["items"] == [mock_items[0], mock_items[1]]
 
     mock_get_dropoff_point_items.return_value = [mock_items[0], mock_items[2]]
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"dropoff_point_id":2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[0], mock_items[2]]
+    assert response.json()["items"] == [mock_items[0], mock_items[2]]
 
     for index, state in enumerate(["stored", "reported", "retrieved", "archived"]):
         mock_get_dropoff_point_items.return_value = [mock_items[index]]
         response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"state":state}})
         assert response.status_code == 200
-        assert response.json() == [mock_items[index]]
+        assert response.json()["items"] == [mock_items[index]]
 
     mock_get_dropoff_point_items.return_value = [mock_items[2]]
     response = client.put(urls["get_dropoff_point_items_1"], json = {"filter": {"tag": "tag2", "state": "retrieved", "dropoff_point_id": 2}})
     assert response.status_code == 200
-    assert response.json() == [mock_items[2]]
+    assert response.json()["items"] == [mock_items[2]]
 
     response = client.put(urls["get_dropoff_point_items"] + "/abc", json =  {"filter": {}})
     assert response.status_code == 400
@@ -169,10 +185,20 @@ def test_retrieve_item(mock_retrieve_item):
 
 @patch("api.main.crud.create_item")
 def test_create_item(mock_create_item):
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_create_item.return_value = mock_item
     
-    response = client.post(urls["create_item"], json = {"description": "description", "tag": "tag", "image": "image", "dropoff_point_id": 1})
+    fake_file = BytesIO(b"fake image content")
+    fake_file.name = "test.jpg"
+    
+    data = {
+        "description": (None, "description"),
+        "tag": (None, "tag"),
+        "image": (fake_file.name, fake_file, "image/jpeg"),
+        "dropoff_point_id": (None, "1"),
+    }
+    
+    response = client.post(urls["create_item"], files = data)
     assert response.status_code == 201
     assert response.json() == mock_item
 
@@ -180,10 +206,20 @@ def test_create_item(mock_create_item):
 
 @patch("api.main.crud.report_item")
 def test_report_item(mock_report_item):
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
     mock_report_item.return_value = mock_item
     
-    response = client.post(urls["report_item"], json = {"description": "description", "tag": "tag", "image": "image", "report_email": "report_email"})
+    fake_file = BytesIO(b"fake image content")
+    fake_file.name = "test.jpg"
+    
+    data = {
+        "description": (None, "description"),
+        "tag": (None, "tag"),
+        "image": (fake_file.name, fake_file, "image/jpeg"),
+        "report_email": (None, "report_email"),
+    }
+    
+    response = client.post(urls["report_item"], files = data)
     assert response.status_code == 201
     assert response.json() == mock_item
 
@@ -204,3 +240,13 @@ def test_delete_item(mock_delete_item):
     mock_delete_item.return_value = None
     response = client.delete(urls["delete_item"] + "/999")
     assert response.status_code == 204
+    
+# GET IMAGE FROM S3 BUCKET
+
+@patch("api.main.crud.get_image_from_s3")
+def test_get_image_from_s3(mock_get_image_from_s3):
+    mock_get_image_from_s3.return_value = {"body": "StreamingResponse_template"}
+    
+    response = client.get(urls["get_image"])
+    assert response.status_code == 200
+    assert response.json() == {"body": "StreamingResponse_template"}
