@@ -1,13 +1,15 @@
 import uvicorn
 import os
+import requests
 
+from jose import jwt, JWTError
 from typing import List, Optional
 from fastapi_pagination import Page, Params
 from fastapi_pagination.paginator import paginate as base_paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, status, File, Form
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, status, File, Form, Request
 from dotenv import load_dotenv, dotenv_values
 
 ENV_FILE_PATH = os.getenv("ENV_FILE_PATH")
@@ -19,6 +21,32 @@ database.Base.metadata.create_all(bind = database.engine)
 app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
 
 disable_installed_extensions_check()
+
+COGNITO_ISSUER = "https://cognito-idp.[region].amazonaws.com/[user_pool_id]"
+COGNITO_AUDIENCE = "[app_client_id]"
+
+def get_jwks():
+    jwks_uri = f"{COGNITO_ISSUER}/.well-known/jwks.json"
+    jwks_response = requests.get(jwks_uri)
+    return jwks_response.json()["keys"]
+
+def validate_token(token: str):
+    try:
+        jwks = get_jwks()
+        # Additional logic to choose the correct key based on the token's header
+        # Decode and validate token using python-jose
+        decoded_token = jwt.decode(token, jwks, algorithms=["RS256"], audience=COGNITO_AUDIENCE, issuer=COGNITO_ISSUER)
+        return decoded_token
+    except JWTError as e:
+        raise HTTPException(status_code=401, detail="Invalid token") from e
+
+async def get_current_user(request: Request):
+    authorization: str = request.headers.get("Authorization")
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header missing")
+
+    token = authorization.split(" ")[1]
+    return validate_token(token)
 
 def custom_paginate(items, params: Optional[Params] = None):
     if params is None:
