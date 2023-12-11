@@ -319,7 +319,7 @@ def test_contact_by_email(mock_send_email, db):
     new_item = schemas.ItemReport(
         description = "new_item_description",
         tag = "new_item_tag",
-        image = "new_item_image",
+        image = None,
         report_email = "new_item_report_email"
     )
     
@@ -328,7 +328,7 @@ def test_contact_by_email(mock_send_email, db):
     new_item = schemas.ItemCreate(
         description = "new_item_description",
         tag = "new_item_tag",
-        image = "new_item_image",
+        image = None,
         dropoff_point_id = 1
     )
     
