@@ -120,6 +120,8 @@ def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 def create_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
                 dropoff_point_id: int = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
+    if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        image = None
     item = schemas.ItemCreate(description=description,
                               tag=tag,
                               image=image,
@@ -133,6 +135,8 @@ def create_item(description: str = Form(...), tag: str = Form(...), image: Optio
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 def report_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
                 report_email: str = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
+    if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        image = None
     item = schemas.ItemReport(description=description,
                               tag=tag,
                               image=image,

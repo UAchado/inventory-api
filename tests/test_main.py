@@ -201,6 +201,20 @@ def test_create_item(mock_create_item):
     response = client.post(urls["create_item"], files = data)
     assert response.status_code == 201
     assert response.json() == mock_item
+    
+    fake_file.name = "test.docx"
+    
+    data = {
+        "description": (None, "description"),
+        "tag": (None, "tag"),
+        "image": (fake_file.name, fake_file, "image/docx"),
+        "dropoff_point_id": (None, "1"),
+    }
+    
+    response = client.post(urls["create_item"], files = data)
+    assert response.status_code == 201
+    assert response.json() == mock_item
+    
 
 # REPORT NEW ITEM
 
@@ -216,6 +230,19 @@ def test_report_item(mock_report_item):
         "description": (None, "description"),
         "tag": (None, "tag"),
         "image": (fake_file.name, fake_file, "image/jpeg"),
+        "report_email": (None, "report_email"),
+    }
+    
+    response = client.post(urls["report_item"], files = data)
+    assert response.status_code == 201
+    assert response.json() == mock_item
+    
+    fake_file.name = "test.docx"
+    
+    data = {
+        "description": (None, "description"),
+        "tag": (None, "tag"),
+        "image": (fake_file.name, fake_file, "image/docx"),
         "report_email": (None, "report_email"),
     }
     
