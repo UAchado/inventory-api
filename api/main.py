@@ -27,7 +27,7 @@ def custom_paginate(items, params: Optional[Params] = None):
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost"],  # Allows all origins to make requests
+    allow_origins=["*"],  # Allows all origins to make requests
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
@@ -43,20 +43,20 @@ def get_db():
     finally:
         db.close()
 
-@app.get("/v1/")
+@app.get("/inventory/v1/")
 def base():
     return {"response": "Hello World!"}
 
 # GET ALL ITEMS
 
-@app.get("/v1/items", response_description = "Get the list of existing items.",
+@app.get("/inventory/v1/items", response_description = "Get the list of existing items.",
          response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_all_items(params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
     return custom_paginate(crud.get_items(db), params)
 
 # GET ITEM BY ID
 
-@app.get("/v1/items/id/{item_id}", response_description = "Get a specific item by its ID.",
+@app.get("/inventory/v1/items/id/{item_id}", response_description = "Get a specific item by its ID.",
          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_item_by_id(item_id: str, db: Session = Depends(get_db)) -> schemas.Item:
     try:
@@ -71,7 +71,7 @@ def get_item_by_id(item_id: str, db: Session = Depends(get_db)) -> schemas.Item:
 
 # GET ITEM TAGS LIST
 
-@app.get("/v1/items/tags", response_description = "Get the list of all tags.",
+@app.get("/inventory/v1/items/tags", response_description = "Get the list of all tags.",
          response_model = List[str], tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_all_tags() -> List[str]:
     return ["Todos","Portáteis","Telemóveis","Tablets","Auscultadores/Fones","Carregadores",
@@ -82,13 +82,13 @@ def get_all_tags() -> List[str]:
 
 # GET ITEMS BY NOT AUTHENTICATED USER
 
-@app.post("/v1/items/stored", response_description = "Get currently active items by filter.",
+@app.post("/inventory/v1/items/stored", response_description = "Get currently active items by filter.",
           response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
 def get_stored_items(filter: schemas.InputFilter,
                      params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
     return custom_paginate(crud.get_stored_items(db = db, filter = filter.filter), params)
 
-@app.put("/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.",
+@app.put("/inventory/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.",
          response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
 def get_dropoff_point_items(dropoff_point_id: str, filter: schemas.InputFilter,
                             params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
@@ -101,7 +101,7 @@ def get_dropoff_point_items(dropoff_point_id: str, filter: schemas.InputFilter,
 
 # MARK ITEM AS RETRIEVED
 
-@app.put("/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrieved' by its ID.",
+@app.put("/inventory/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrieved' by its ID.",
          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
 def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_db)) -> schemas.Item:
     try:
@@ -116,7 +116,7 @@ def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_
 
 # CREATE A NEW ITEM
 
-@app.post("/v1/items/create", response_description = "Create/Insert a new item.",
+@app.post("/inventory/v1/items/create", response_description = "Create/Insert a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 def create_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
                 dropoff_point_id: int = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
@@ -129,7 +129,7 @@ def create_item(description: str = Form(...), tag: str = Form(...), image: Optio
 
 # REPORT A NEW ITEM
 
-@app.post("/v1/items/report", response_description = "Report a new item.",
+@app.post("/inventory/v1/items/report", response_description = "Report a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 def report_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
                 report_email: str = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
@@ -142,7 +142,7 @@ def report_item(description: str = Form(...), tag: str = Form(...), image: Optio
 
 # DELETE EXISTING ITEM
 
-@app.delete("/v1/items/id/{item_id}", response_description = "Delete a specific item by its ID.",
+@app.delete("/inventory/v1/items/id/{item_id}", response_description = "Delete a specific item by its ID.",
             tags = ["Items"], status_code = status.HTTP_200_OK)
 def delete_item(item_id: str, db: Session = Depends(get_db)):
     try:
@@ -156,7 +156,7 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
 
 # GET IMAGE FROM S3 BUCKET
 
-@app.get("/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
+@app.get("/inventory/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
             response_model = dict, tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_image_from_s3(image_uuid: str):
     return crud.get_image_from_s3(image_uuid)

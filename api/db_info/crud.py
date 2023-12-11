@@ -1,3 +1,4 @@
+import smtplib
 import boto3
 import os
 import uuid
@@ -6,6 +7,8 @@ from typing import List, Optional
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from botocore.exceptions import NoCredentialsError
 from . import models, schemas
 
@@ -109,11 +112,33 @@ def contact_by_email(db: Session, new_item: schemas.ItemCreate):
     for report in stored_reports:
         notified_mails = []
         if report.report_email not in notified_mails:
-            message = f"A item classified as {new_item.tag} has been found in {new_item.dropoff_point_id}. Take a look it might be yours!"
+            smtp_server = os.environ.get("SMTP_SERVER")
+            smtp_port = int(os.environ.get("SMTP_PORT", int()))
+            username = os.environ.get("EMAIL_USERNAME")
+            password = os.environ.get("EMAIL_PASSWORD")
+            message = f"Um item caracterizado como {new_item.tag} acabou de ser uachado em um dos nossos pontos.\n Dá uma olhada, pode ser que seja teu!\n\nna UA, nada se perde, tudo se UAcha"
 
-            # TODO: Contact using e-report_email account
+            msg = MIMEMultipart()
+            msg["From"] = username
+            msg["To"] = report.report_email
+            msg["Subject"] = "Um item que reportaste, acaba de ser UACHADO!"
+            msg.attach(MIMEText(message, "plain"))
+            
+            send_email(smtp_server, smtp_port, username, password, msg, report.report_email)
 
             notified_mails.append(report.report_email)
+            
+def send_email(smtp_server, smtp_port, username, password, msg, report_email):
+    try:
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(username, password)
+            server.send_message(msg)
+            print(f"INFO:\tEMAIL SENT TO: {report_email}")
+    except smtplib.SMTPServerDisconnected:
+        print("ERROR:\tServer disconnected unexpectedly.")
+    except Exception as e:
+        print(f"Error:\t{e}")
 
 def create_item(db: Session, new_item: schemas.ItemCreate) -> models.Item:
     
@@ -128,7 +153,7 @@ def create_item(db: Session, new_item: schemas.ItemCreate) -> models.Item:
                           report_email = None,
                           retrieved_email = None,
                           retrieved_date = None)
-            
+
     contact_by_email(db, new_item)
         
     db.add(db_item)

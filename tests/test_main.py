@@ -10,18 +10,18 @@ client = TestClient(main.app)
 invalid_id_message = {'detail' : 'INVALID ID FORMAT'}
 
 urls = {
-    "base": "/v1",
-    "get_all_items": "/v1/items",
-    "get_item_by_id": "/v1/items/id",
-    "get_all_tags": "/v1/items/tags",
-    "get_stored_items": "/v1/items/stored",
-    "get_dropoff_point_items": "/v1/items/point",
-    "get_dropoff_point_items_1": "/v1/items/point/1",
-    "retrieve_item": "/v1/items/retrieve",
-    "create_item": "/v1/items/create",
-    "report_item": "/v1/items/report",
-    "delete_item": "/v1/items/id",
-    "get_image": "/v1/image/uuid"
+    "base": "/inventory/v1",
+    "get_all_items": "/inventory/v1/items",
+    "get_item_by_id": "/inventory/v1/items/id",
+    "get_all_tags": "/inventory/v1/items/tags",
+    "get_stored_items": "/inventory/v1/items/stored",
+    "get_dropoff_point_items": "/inventory/v1/items/point",
+    "get_dropoff_point_items_1": "/inventory/v1/items/point/1",
+    "retrieve_item": "/inventory/v1/items/retrieve",
+    "create_item": "/inventory/v1/items/create",
+    "report_item": "/inventory/v1/items/report",
+    "delete_item": "/inventory/v1/items/id",
+    "get_image": "/inventory/v1/image/uuid"
 }
 
 ## INTEGRATION TESTS
