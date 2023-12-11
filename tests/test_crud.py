@@ -127,7 +127,7 @@ def test_get_item_by_id(mock_update_retrieved, db):
 
     mock_update_retrieved.assert_called()
 
-def get_stored_items(db):
+def test_get_stored_items(db):
     
     add_items_to_db(db, item_bucket)
     filter_param = {}
@@ -149,7 +149,7 @@ def get_stored_items(db):
     }
     
     items = crud.get_stored_items(db = db, filter = filter_param)
-    assert len(items) == 0
+    assert len(items) == 1
     assert all(item.state == "stored" for item in items)
 
 @patch("api.db_info.crud.update_retrieved_to_archived_items")
@@ -311,3 +311,27 @@ def test_delete_item(mock_delete_file_from_s3, db):
     
     items = crud.get_items(db = db)
     assert len(items) == 0
+
+@patch("api.db_info.crud.send_email")
+def test_contact_by_email(mock_send_email, db):
+    mock_send_email.return_value = None
+    
+    new_item = schemas.ItemReport(
+        description = "new_item_description",
+        tag = "new_item_tag",
+        image = None,
+        report_email = "new_item_report_email"
+    )
+    
+    crud.report_item(db = db, new_item = new_item)
+    
+    new_item = schemas.ItemCreate(
+        description = "new_item_description",
+        tag = "new_item_tag",
+        image = None,
+        dropoff_point_id = 1
+    )
+    
+    crud.create_item(db = db, new_item = new_item)
+    
+    mock_send_email.assert_called()
