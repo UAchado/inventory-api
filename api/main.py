@@ -7,16 +7,19 @@ from fastapi_pagination.paginator import paginate as base_paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, status, File, Form
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, status, File, Form, Request
 from dotenv import load_dotenv, dotenv_values
 
 ENV_FILE_PATH = os.getenv("ENV_FILE_PATH")
 load_dotenv(ENV_FILE_PATH)
 
-from db_info import crud, database, schemas
+from db_info import crud, database, schemas, auth
 database.Base.metadata.create_all(bind = database.engine)
 
 app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
+
+invalid_id_message = "INVALID ID FORMAT"
+item_not_found_message = "ITEM NOT FOUND"
 
 disable_installed_extensions_check()
 
@@ -33,15 +36,14 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 
-invalid_id_message = "INVALID ID FORMAT"
-item_not_found_message = "ITEM NOT FOUND"
-
 def get_db():
     db = database.SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+## ENDPOINTS
 
 @app.get("/inventory/v1/")
 def base():
@@ -51,14 +53,21 @@ def base():
 
 @app.get("/inventory/v1/items", response_description = "Get the list of existing items.",
          response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_all_items(params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
+def get_all_items(request: Request,
+                  params: Params = Depends(),
+                  db: Session = Depends(get_db)) -> Page[schemas.Item]:
+    auth.verify_access(request)
     return custom_paginate(crud.get_items(db), params)
 
 # GET ITEM BY ID
 
 @app.get("/inventory/v1/items/id/{item_id}", response_description = "Get a specific item by its ID.",
          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_item_by_id(item_id: str, db: Session = Depends(get_db)) -> schemas.Item:
+def get_item_by_id(request: Request,
+                   item_id: str,
+                   db: Session = Depends(get_db)) -> schemas.Item:
+    auth.verify_access(request)
+    
     try:
         item_id = int(item_id)
     except ValueError:
@@ -84,14 +93,20 @@ def get_all_tags() -> List[str]:
 
 @app.post("/inventory/v1/items/stored", response_description = "Get currently active items by filter.",
           response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
-def get_stored_items(filter: schemas.InputFilter,
+def get_stored_items(request: Request,
+                     filter: schemas.InputFilter,
                      params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
+    auth.verify_access(request)
     return custom_paginate(crud.get_stored_items(db = db, filter = filter.filter), params)
 
 @app.put("/inventory/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.",
          response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
-def get_dropoff_point_items(dropoff_point_id: str, filter: schemas.InputFilter,
-                            params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
+def get_dropoff_point_items(request: Request,
+                            dropoff_point_id: str,
+                            filter: schemas.InputFilter,
+                            params: Params = Depends(),
+                            db: Session = Depends(get_db)) -> Page[schemas.Item]:
+    auth.verify_access(request)
     try:
         dropoff_point_id = int(dropoff_point_id)
     except ValueError:
@@ -103,7 +118,11 @@ def get_dropoff_point_items(dropoff_point_id: str, filter: schemas.InputFilter,
 
 @app.put("/inventory/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrieved' by its ID.",
          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
-def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_db)) -> schemas.Item:
+def retrieve_item(request: Request,
+                  item_id: str,
+                  email: schemas.Email,
+                  db: Session = Depends(get_db)) -> schemas.Item:
+    auth.verify_access(request)
     try:
         item_id = int(item_id)
     except ValueError:
@@ -118,8 +137,13 @@ def retrieve_item(item_id: str, email: schemas.Email, db: Session = Depends(get_
 
 @app.post("/inventory/v1/items/create", response_description = "Create/Insert a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
-def create_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
-                dropoff_point_id: int = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
+def create_item(request: Request,
+                description: str = Form(...),
+                tag: str = Form(...),
+                image: Optional[UploadFile] = File(...),
+                dropoff_point_id: int = Form(...),
+                db: Session = Depends(get_db)) -> schemas.Item:
+    auth.verify_access(request)
     item = schemas.ItemCreate(description=description,
                               tag=tag,
                               image=image,
@@ -131,8 +155,13 @@ def create_item(description: str = Form(...), tag: str = Form(...), image: Optio
 
 @app.post("/inventory/v1/items/report", response_description = "Report a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
-def report_item(description: str = Form(...), tag: str = Form(...), image: Optional[UploadFile] = File(...),
-                report_email: str = Form(...), db: Session = Depends(get_db)) -> schemas.Item:
+def report_item(request: Request,
+                description: str = Form(...),
+                tag: str = Form(...),
+                image: Optional[UploadFile] = File(...),
+                report_email: str = Form(...),
+                db: Session = Depends(get_db)) -> schemas.Item:
+    auth.verify_access(request)
     item = schemas.ItemReport(description=description,
                               tag=tag,
                               image=image,
@@ -144,7 +173,10 @@ def report_item(description: str = Form(...), tag: str = Form(...), image: Optio
 
 @app.delete("/inventory/v1/items/id/{item_id}", response_description = "Delete a specific item by its ID.",
             tags = ["Items"], status_code = status.HTTP_200_OK)
-def delete_item(item_id: str, db: Session = Depends(get_db)):
+def delete_item(request: Request,
+                item_id: str,
+                db: Session = Depends(get_db)):
+    auth.verify_access(request)
     try:
         item_id = int(item_id)
     except ValueError:
@@ -158,7 +190,9 @@ def delete_item(item_id: str, db: Session = Depends(get_db)):
 
 @app.get("/inventory/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
             response_model = dict, tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_image_from_s3(image_uuid: str):
+def get_image_from_s3(request: Request,
+                      image_uuid: str):
+    auth.verify_access(request)
     return crud.get_image_from_s3(image_uuid)
 
 if __name__  == '__main__':
