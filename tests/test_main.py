@@ -28,6 +28,7 @@ urls = {
 
 # BASE
 
+
 def test_base():
     response = client.get(urls["base"])
     assert response.status_code == 200
@@ -35,8 +36,10 @@ def test_base():
 
 # GET ALL ITEMS
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_items")
-def test_get_all_items(mock_get_items):
+def test_get_all_items(mock_get_items, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_items = [
         {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None},
         {"id" : 2, "description": "description", "tag": "tag", "image": "image", "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None},
@@ -56,8 +59,10 @@ def test_get_all_items(mock_get_items):
 
 # GET ITEM BY ID
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_item_by_id")
-def test_get_item_by_id(mock_get_item_by_id):
+def test_get_item_by_id(mock_get_item_by_id, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_get_item_by_id.return_value = mock_item
     
@@ -82,8 +87,10 @@ def test_get_all_tags():
 
 # GET STORED ITEMS
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_stored_items")
-def test_get_stored_items(mock_get_stored_items):
+def test_get_stored_items(mock_get_stored_items, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_items = [
         {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None},
         {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "report_email": None, "retrieved_email": None, "retrieved_date": None},
@@ -118,8 +125,10 @@ def test_get_stored_items(mock_get_stored_items):
 
 # GET DROP-OFF POINT ITEMS
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_dropoff_point_items")
-def test_get_dropoff_point_items(mock_get_dropoff_point_items):
+def test_get_dropoff_point_items(mock_get_dropoff_point_items, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_items = [
         {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "report_email": None, "retrieved_email": None, "retrieved_date": None},
         {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None},
@@ -163,8 +172,10 @@ def test_get_dropoff_point_items(mock_get_dropoff_point_items):
 
 # RETRIEVE ITEM
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.retrieve_item")
-def test_retrieve_item(mock_retrieve_item):
+def test_retrieve_item(mock_retrieve_item, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     
     retrieved_mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "retrieved", "dropoff_point_id": 1, "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"}
     mock_retrieve_item.return_value = retrieved_mock_item
@@ -183,8 +194,10 @@ def test_retrieve_item(mock_retrieve_item):
 
 # CREATE NEW ITEM
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.create_item")
-def test_create_item(mock_create_item):
+def test_create_item(mock_create_item, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "stored", "dropoff_point_id": 1, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_create_item.return_value = mock_item
     
@@ -218,8 +231,10 @@ def test_create_item(mock_create_item):
 
 # REPORT NEW ITEM
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.report_item")
-def test_report_item(mock_report_item):
+def test_report_item(mock_report_item, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
     mock_report_item.return_value = mock_item
     
@@ -252,8 +267,10 @@ def test_report_item(mock_report_item):
 
 # DELETE EXISTING ITEM
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.delete_item")
-def test_delete_item(mock_delete_item):
+def test_delete_item(mock_delete_item, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_delete_item.return_value = "OK"
     
     response = client.delete(urls["delete_item"] + "/1")
@@ -270,8 +287,10 @@ def test_delete_item(mock_delete_item):
     
 # GET IMAGE FROM S3 BUCKET
 
+@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_image_from_s3")
-def test_get_image_from_s3(mock_get_image_from_s3):
+def test_get_image_from_s3(mock_get_image_from_s3, mock_verify_access):
+    mock_verify_access.return_value = {"user": "dummy_user"}
     mock_get_image_from_s3.return_value = {"body": "StreamingResponse_template"}
     
     response = client.get(urls["get_image"])
