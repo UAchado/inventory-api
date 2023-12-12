@@ -6,8 +6,6 @@ from fastapi import HTTPException, Request, status
 
 def verify_access(request: Request):
     
-    print("Entrei")
-    
     authorization = request.headers.get("Authorization")
     if not authorization:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "ERROR: Authorization header missing")
