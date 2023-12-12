@@ -137,6 +137,7 @@ def retrieve_item(request: Request,
 
 @app.post("/inventory/v1/items/create", response_description = "Create/Insert a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
+
 def create_item(request: Request,
                 description: str = Form(...),
                 tag: str = Form(...),
@@ -144,6 +145,10 @@ def create_item(request: Request,
                 dropoff_point_id: int = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
     auth.verify_access(request)
+
+    if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        image = None
+
     item = schemas.ItemCreate(description=description,
                               tag=tag,
                               image=image,
@@ -155,6 +160,7 @@ def create_item(request: Request,
 
 @app.post("/inventory/v1/items/report", response_description = "Report a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
+
 def report_item(request: Request,
                 description: str = Form(...),
                 tag: str = Form(...),
@@ -162,6 +168,10 @@ def report_item(request: Request,
                 report_email: str = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
     auth.verify_access(request)
+
+    if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
+        image = None
+
     item = schemas.ItemReport(description=description,
                               tag=tag,
                               image=image,
