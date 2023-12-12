@@ -22,5 +22,5 @@ def verify_access(request: Request):
         return decoded_token
     except JWTError:
         raise HTTPException(status_code = status.HTTP_401_UNAUTHORIZED, detail = "ERROR: Invalid Access token")
-    except Exception as e:
-        raise e
+    except Exception:
+        raise HTTPException(status_code = status.HTTP_400_BAD_REQUEST, detail = "ERROR: Error authenticating")
