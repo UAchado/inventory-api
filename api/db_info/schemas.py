@@ -1,3 +1,4 @@
+from datetime import datetime
 from fastapi import UploadFile
 from pydantic import BaseModel
 from typing import Optional
@@ -11,6 +12,7 @@ class ItemBase(BaseModel):
     image: Optional[str]
     state: str
     dropoff_point_id: Optional[int]
+    insertion_date: Optional[datetime]
     report_email: Optional[str]
     retrieved_email: Optional[str]
     retrieved_date: Optional[str]
@@ -28,6 +30,7 @@ class Item(ItemBase):
                 "image": "image",
                 "state": "stored",
                 "dropoff_point_id": 1,
+                "insertion_date": "2023-01-01T00:00:00",
                 "report_email": None,
                 "retrieved_email": None,
                 "retrieved_date": None,
@@ -39,6 +42,7 @@ class Item(ItemBase):
                 "image": "image",
                 "state": "reported",
                 "dropoff_point_id": None,
+                "insertion_date": "2023-01-01T00:00:00",
                 "report_email": "my_mail",
                 "retrieved_email": None,
                 "retrieved_date": None
@@ -50,6 +54,7 @@ class Item(ItemBase):
                 "image": "image",
                 "state": "retrieved",
                 "dropoff_point_id": 1,
+                "insertion_date": "2023-01-01T00:00:00",
                 "report_email": None,
                 "retrieved_email": "michelle.diaz@ua.pt",
                 "retrieved_date": "today"
@@ -61,6 +66,7 @@ class Item(ItemBase):
                 "image": "image",
                 "state": "archived",
                 "dropoff_point_id": 1,
+                "insertion_date": "2023-01-01T00:00:00",
                 "report_email": None,
                 "retrieved_email": "michelle.diaz@ua.pt",
                 "retrieved_date": "very long time ago"

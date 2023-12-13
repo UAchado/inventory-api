@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS items (
     image VARCHAR(500) NULL,
     state VARCHAR(50),
     dropoff_point_id INT NULL,
+    insertion_date DATETIME DEFAULT CURRENT_TIMESTAMP,
     report_email VARCHAR(100) NULL,
     retrieved_email VARCHAR(100) NULL,
     retrieved_date VARCHAR(100) NULL

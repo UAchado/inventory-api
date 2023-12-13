@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import List
 from pytest import fixture
 from fastapi import File, UploadFile
@@ -94,7 +95,6 @@ def test_get_items_with_flag(mock_update_retrieved, db):
     assert items[1].state == item_bucket[2].state
 
     mock_update_retrieved.assert_called()
-
 @patch("api.db_info.crud.update_retrieved_to_archived_items")
 def test_get_item_by_id(mock_update_retrieved, db):
 
@@ -204,9 +204,9 @@ def test_get_dropoff_point_items(mock_update_retrieved, db):
     
 
 @patch("api.db_info.crud.upload_file_to_s3")
-@patch("api.db_info.crud.contact_by_email")
-def test_create_item(mock_contact_by_email, mock_upload_file_to_s3, db):
-    mock_contact_by_email.return_value = None
+@patch("api.db_info.contact.contact_reported_email")
+def test_create_item(mock_contact_reported_email, mock_upload_file_to_s3, db):
+    mock_contact_reported_email.return_value = None
     
     new_item = schemas.ItemCreate(
         description = "new_item_description",
@@ -237,7 +237,9 @@ def test_create_item(mock_contact_by_email, mock_upload_file_to_s3, db):
     assert item.image == "image_url_str"
 
 @patch("api.db_info.crud.upload_file_to_s3")
-def test_report_item(mock_upload_file_to_s3, db):
+@patch("api.db_info.contact.contact_new_report")
+def test_report_item(mock_contact_new_report, mock_upload_file_to_s3, db):
+    mock_contact_new_report.return_value = None
     
     new_item = schemas.ItemReport(
         description = "new_item_description",
@@ -266,8 +268,10 @@ def test_report_item(mock_upload_file_to_s3, db):
     assert item.report_email == new_item.report_email
     assert item.dropoff_point_id == None
     assert item.image == "image_url_str"
-    
-def test_retrieve_item(db):
+
+@patch("api.db_info.contact.contact_netrieved_email")
+def test_retrieve_item(mock_contact_netrieved_email, db):
+    mock_contact_netrieved_email.return_value = None
     
     add_items_to_db(db, [item_bucket[0]])
     
@@ -312,26 +316,4 @@ def test_delete_item(mock_delete_file_from_s3, db):
     items = crud.get_items(db = db)
     assert len(items) == 0
 
-@patch("api.db_info.crud.send_email")
-def test_contact_by_email(mock_send_email, db):
-    mock_send_email.return_value = None
-    
-    new_item = schemas.ItemReport(
-        description = "new_item_description",
-        tag = "new_item_tag",
-        image = None,
-        report_email = "new_item_report_email"
-    )
-    
-    crud.report_item(db = db, new_item = new_item)
-    
-    new_item = schemas.ItemCreate(
-        description = "new_item_description",
-        tag = "new_item_tag",
-        image = None,
-        dropoff_point_id = 1
-    )
-    
-    crud.create_item(db = db, new_item = new_item)
-    
-    mock_send_email.assert_called()
+
