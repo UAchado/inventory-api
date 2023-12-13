@@ -70,7 +70,7 @@ def test_contact_netrieved_email(mock_send_email):
         insertion_date = datetime.datetime.now(),
         report_email = None,
         retrieved_email = "dummy_email", 
-        retrieved_date = None)
+        retrieved_date = "dummy_datetime")
     
     contact.contact_netrieved_email(item)
     
