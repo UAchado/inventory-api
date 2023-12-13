@@ -17,7 +17,7 @@ def contact_reported_email(db: Session, new_item: schemas.ItemCreate):
             
             subject = "O teu item foi UAchado!"
             message = f"""
-                Um item parecido ao que reportaste acabou de ser UAchado em um dos nossos pontos.\n
+                Um item parecido ao que reportaste acabou de ser UAchado num dos nossos pontos.\n
                 Dá uma olhada, pode ser que seja teu!\n\n
                 
                 Item: {report.tag}\n
@@ -25,7 +25,7 @@ def contact_reported_email(db: Session, new_item: schemas.ItemCreate):
         
                 na UA, nada se perde, tudo se UAcha\n\n
                 
-                Cumprimentos\n
+                Cumprimentos,\n
                 Equipa do UAchado
             """
             send_email(report.report_email, subject, message)
@@ -42,12 +42,12 @@ def contact_new_report(report: schemas.ItemReport):
         Descrição: {report.description}\n
         Email: {report.report_email}\n\n
         
-        Assim que encontrarmos um item que possa ser o teu entraremos em contato.\n
+        Assim que encontrarmos um item que possa ser o teu entraremos em contacto.\n
         Tem atenção à tua caixa de correio. O nosso mail pode ser reencaminhado para o teu spam.\n\n
         
         na UA, nada se perde, tudo se UAcha\n\n
         
-        Cumprimentos\n
+        Cumprimentos,\n
         Equipa do UAchado
     """
 
@@ -62,14 +62,14 @@ def contact_netrieved_email(item: schemas.Item):
         Item: {item.tag}\n
         Descrição: {item.description}\n
         Email: {item.retrieved_email}\n
-        Data: {item.retrieved_date}\n\n
+        Data: {item.retrieved_date[0:10]}\n\n
         
         Qualquer dúvida entra em contacto com a equipa do UAchado em uachado.app@gmail.com!\n\n
         
-        Obrigado por utilizes o UAchado!\n
+        Obrigado por utilizares o UAchado!\n
         na UA, nada se perde, tudo se UAcha\n\n
         
-        Cumprimentos\n
+        Cumprimentos,\n
         Equipa do UAchado
     """
 
