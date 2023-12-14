@@ -5,7 +5,13 @@ from jose import jwt, JWTError
 from fastapi import HTTPException, Request, status
 
 def verify_access(request: Request):
-    
+    """
+    Verify access by checking the authorization token in the request header.
+
+    :param request: The request object containing the headers.
+    :return: The decoded access token if it is valid and authorized.
+    :raises HTTPException: If the authorization header is missing, the access token is invalid, or if there is an error authenticating.
+    """
     authorization = request.headers.get("Authorization")
     if not authorization:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail = "ERROR: Authorization header missing")
