@@ -15,7 +15,7 @@ from dotenv import load_dotenv, dotenv_values
 ENV_FILE_PATH = os.getenv("ENV_FILE_PATH")
 load_dotenv(ENV_FILE_PATH)
 
-from db_info import crud, database, schemas, auth
+from db_info import crud, database, schemas, auth, init_db
 database.Base.metadata.create_all(bind = database.engine)
 
 app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
@@ -25,37 +25,6 @@ item_not_found_message = "ITEM NOT FOUND"
 
 disable_installed_extensions_check()
 
-COGNITO_ISSUER = "https://cognito-idp.[region].amazonaws.com/[user_pool_id]"
-COGNITO_AUDIENCE = "[app_client_id]"
-
-def get_jwks():
-    jwks_uri = f"{COGNITO_ISSUER}/.well-known/jwks.json"
-    jwks_response = requests.get(jwks_uri)
-    return jwks_response.json()["keys"]
-
-def validate_token(token: str):
-    try:
-        jwks = get_jwks()
-        # Additional logic to choose the correct key based on the token's header
-        # Decode and validate token using python-jose
-        decoded_token = jwt.decode(token, jwks, algorithms=["RS256"], audience=COGNITO_AUDIENCE, issuer=COGNITO_ISSUER)
-        return decoded_token
-    except JWTError as e:
-        raise HTTPException(status_code=401, detail="Invalid token") from e
-
-async def get_current_user(request: Request):
-    authorization: str = request.headers.get("Authorization")
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header missing")
-
-    token = authorization.split(" ")[1]
-    return validate_token(token)
-
-def custom_paginate(items, params: Optional[Params] = None):
-    if params is None:
-        params = Params(page=1,size=len(items))
-    return base_paginate(items, params)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Allows all origins to make requests
@@ -63,6 +32,12 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
+    
+
+def custom_paginate(items, params: Optional[Params] = None):
+    if params is None:
+        params = Params(page=1,size=len(items))
+    return base_paginate(items, params)
 
 def get_db():
     db = database.SessionLocal()
@@ -71,9 +46,20 @@ def get_db():
     finally:
         db.close()
 
+## INIT DB
+
+@app.on_event("startup")
+async def startup_event():
+    db = database.SessionLocal()
+    try:
+        if crud.get_items(db) == []:
+            init_db.init(db)
+    finally:
+        db.close()    
+        
 ## ENDPOINTS
 
-@app.get("/inventory/v1/")
+@app.get("/inventory/v1")
 def base():
     return {"response": "Hello World!"}
 
@@ -91,11 +77,8 @@ def get_all_items(request: Request,
 
 @app.get("/inventory/v1/items/id/{item_id}", response_description = "Get a specific item by its ID.",
          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_item_by_id(request: Request,
-                   item_id: str,
+def get_item_by_id(item_id: str,
                    db: Session = Depends(get_db)) -> schemas.Item:
-    auth.verify_access(request)
-    
     try:
         item_id = int(item_id)
     except ValueError:
@@ -121,10 +104,8 @@ def get_all_tags() -> List[str]:
 
 @app.post("/inventory/v1/items/stored", response_description = "Get currently active items by filter.",
           response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
-def get_stored_items(request: Request,
-                     filter: schemas.InputFilter,
+def get_stored_items(filter: schemas.InputFilter,
                      params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
-    auth.verify_access(request)
     return custom_paginate(crud.get_stored_items(db = db, filter = filter.filter), params)
 
 @app.put("/inventory/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.",
@@ -189,13 +170,11 @@ def create_item(request: Request,
 @app.post("/inventory/v1/items/report", response_description = "Report a new item.",
           response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
 
-def report_item(request: Request,
-                description: str = Form(...),
+def report_item(description: str = Form(...),
                 tag: str = Form(...),
                 image: Optional[UploadFile] = File(...),
                 report_email: str = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
-    auth.verify_access(request)
 
     if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         image = None
@@ -228,9 +207,7 @@ def delete_item(request: Request,
 
 @app.get("/inventory/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
             response_model = dict, tags = ["Items"], status_code = status.HTTP_200_OK)
-def get_image_from_s3(request: Request,
-                      image_uuid: str):
-    auth.verify_access(request)
+def get_image_from_s3(image_uuid: str):
     return crud.get_image_from_s3(image_uuid)
 
 if __name__  == '__main__':
