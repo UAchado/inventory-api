@@ -7,6 +7,8 @@ from api import main
 
 client = TestClient(main.app)
 
+date_mock_element = "2023-01-01T00:00:00"
+first_page = "?page=1&size=1"
 invalid_id_message = {'detail' : 'INVALID ID FORMAT'}
 
 urls = {
@@ -41,10 +43,10 @@ def test_base():
 def test_get_all_items(mock_get_items, mock_verify_access):
     mock_verify_access.return_value = {"user": "dummy_user"}
     mock_items = [
-        {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
-        {"id" : 2, "description": "description", "tag": "tag", "image": "image", "state": "reported", "dropoff_point_id": None, "insertion_date": "2023-01-01T00:00:00", "report_email": "report_email", "retrieved_email": None, "retrieved_date": None},
-        {"id" : 3, "description": "description", "tag": "tag", "image": "image", "state": "retrieved", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
-        {"id" : 4, "description": "description", "tag": "tag", "image": "image", "state": "archived", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
+        {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None},
+        {"id" : 2, "description": "description", "tag": "tag", "image": "image", "state": "reported", "dropoff_point_id": None, "insertion_date": date_mock_element, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None},
+        {"id" : 3, "description": "description", "tag": "tag", "image": "image", "state": "retrieved", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
+        {"id" : 4, "description": "description", "tag": "tag", "image": "image", "state": "archived", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
     ]
 
     mock_get_items.return_value = mock_items
@@ -53,7 +55,7 @@ def test_get_all_items(mock_get_items, mock_verify_access):
     assert response.status_code == 200
     assert response.json()["items"] == mock_items
     
-    response = client.get(urls["get_all_items"]+"?page=1&size=1")
+    response = client.get(urls["get_all_items"]+first_page)
     assert response.status_code == 200
     assert response.json()["items"] == [mock_items[0]]
 
@@ -61,7 +63,7 @@ def test_get_all_items(mock_get_items, mock_verify_access):
 
 @patch("api.main.crud.get_item_by_id")
 def test_get_item_by_id(mock_get_item_by_id):
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_get_item_by_id.return_value = mock_item
     
     response = client.get(urls["get_item_by_id"] + "/1")
@@ -88,9 +90,9 @@ def test_get_all_tags():
 @patch("api.main.crud.get_stored_items")
 def test_get_stored_items(mock_get_stored_items):
     mock_items = [
-        {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
-        {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
-        {"id" : 3, "description": "description", "tag": "tag2", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
+        {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None},
+        {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None},
+        {"id" : 3, "description": "description", "tag": "tag2", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None},
     ]
 
     mock_get_stored_items.return_value = mock_items
@@ -98,7 +100,7 @@ def test_get_stored_items(mock_get_stored_items):
     assert response.status_code == 200
     assert response.json()["items"] == mock_items
     
-    response = client.post(urls["get_stored_items"]+"?page=1&size=1", json = {"filter": {}})
+    response = client.post(urls["get_stored_items"]+first_page, json = {"filter": {}})
     assert response.status_code == 200
     assert response.json()["items"] == [mock_items[0]]
 
@@ -126,10 +128,10 @@ def test_get_stored_items(mock_get_stored_items):
 def test_get_dropoff_point_items(mock_get_dropoff_point_items, mock_verify_access):
     mock_verify_access.return_value = {"user": "dummy_user"}
     mock_items = [
-        {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
-        {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "reported", "dropoff_point_id": None, "insertion_date": "2023-01-01T00:00:00", "report_email": "report_email", "retrieved_email": None, "retrieved_date": None},
-        {"id" : 3, "description": "description", "tag": "tag2", "image": "image", "state": "retrieved", "dropoff_point_id": 2, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
-        {"id" : 4, "description": "description", "tag": "tag2", "image": "image", "state": "archived", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
+        {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None},
+        {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "reported", "dropoff_point_id": None, "insertion_date": date_mock_element, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None},
+        {"id" : 3, "description": "description", "tag": "tag2", "image": "image", "state": "retrieved", "dropoff_point_id": 2, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
+        {"id" : 4, "description": "description", "tag": "tag2", "image": "image", "state": "archived", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"},
     ]
 
     mock_get_dropoff_point_items.return_value = mock_items
@@ -137,7 +139,7 @@ def test_get_dropoff_point_items(mock_get_dropoff_point_items, mock_verify_acces
     assert response.status_code == 200
     assert response.json()["items"] == mock_items
     
-    response = client.put(urls["get_dropoff_point_items_1"]+"?page=1&size=1", json = {"filter": {}})
+    response = client.put(urls["get_dropoff_point_items_1"]+first_page, json = {"filter": {}})
     assert response.status_code == 200
     assert response.json()["items"] == [mock_items[0]]
 
@@ -173,7 +175,7 @@ def test_get_dropoff_point_items(mock_get_dropoff_point_items, mock_verify_acces
 def test_retrieve_item(mock_retrieve_item, mock_verify_access):
     mock_verify_access.return_value = {"user": "dummy_user"}
     
-    retrieved_mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "retrieved", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"}
+    retrieved_mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "retrieved", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": "retrieved_email", "retrieved_date": "retrieved_date"}
     mock_retrieve_item.return_value = retrieved_mock_item
     
     response = client.put(urls["retrieve_item"] + "/1", json = {"email": "retrieved_email"})
@@ -194,7 +196,7 @@ def test_retrieve_item(mock_retrieve_item, mock_verify_access):
 @patch("api.main.crud.create_item")
 def test_create_item(mock_create_item, mock_verify_access):
     mock_verify_access.return_value = {"user": "dummy_user"}
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "stored", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "stored", "dropoff_point_id": 1, "insertion_date": date_mock_element, "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_create_item.return_value = mock_item
     
     fake_file = BytesIO(b"fake image content")
@@ -229,7 +231,7 @@ def test_create_item(mock_create_item, mock_verify_access):
 
 @patch("api.main.crud.report_item")
 def test_report_item(mock_report_item):
-    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "insertion_date": "2023-01-01T00:00:00", "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
+    mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "insertion_date": date_mock_element, "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
     mock_report_item.return_value = mock_item
     
     fake_file = BytesIO(b"fake image content")
