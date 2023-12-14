@@ -59,10 +59,8 @@ def test_get_all_items(mock_get_items, mock_verify_access):
 
 # GET ITEM BY ID
 
-@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_item_by_id")
-def test_get_item_by_id(mock_get_item_by_id, mock_verify_access):
-    mock_verify_access.return_value = {"user": "dummy_user"}
+def test_get_item_by_id(mock_get_item_by_id):
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None}
     mock_get_item_by_id.return_value = mock_item
     
@@ -87,10 +85,8 @@ def test_get_all_tags():
 
 # GET STORED ITEMS
 
-@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_stored_items")
-def test_get_stored_items(mock_get_stored_items, mock_verify_access):
-    mock_verify_access.return_value = {"user": "dummy_user"}
+def test_get_stored_items(mock_get_stored_items):
     mock_items = [
         {"id" : 1, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 1, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
         {"id" : 2, "description": "description", "tag": "tag1", "image": "image", "state": "stored", "dropoff_point_id": 2, "insertion_date": "2023-01-01T00:00:00", "report_email": None, "retrieved_email": None, "retrieved_date": None},
@@ -231,10 +227,8 @@ def test_create_item(mock_create_item, mock_verify_access):
 
 # REPORT NEW ITEM
 
-@patch("api.main.auth.verify_access")
 @patch("api.main.crud.report_item")
-def test_report_item(mock_report_item, mock_verify_access):
-    mock_verify_access.return_value = {"user": "dummy_user"}
+def test_report_item(mock_report_item):
     mock_item = {"id" : 1, "description": "description", "tag": "tag", "image": None, "state": "reported", "dropoff_point_id": None, "insertion_date": "2023-01-01T00:00:00", "report_email": "report_email", "retrieved_email": None, "retrieved_date": None}
     mock_report_item.return_value = mock_item
     
@@ -287,10 +281,8 @@ def test_delete_item(mock_delete_item, mock_verify_access):
     
 # GET IMAGE FROM S3 BUCKET
 
-@patch("api.main.auth.verify_access")
 @patch("api.main.crud.get_image_from_s3")
-def test_get_image_from_s3(mock_get_image_from_s3, mock_verify_access):
-    mock_verify_access.return_value = {"user": "dummy_user"}
+def test_get_image_from_s3(mock_get_image_from_s3):
     mock_get_image_from_s3.return_value = {"body": "StreamingResponse_template"}
     
     response = client.get(urls["get_image"])
