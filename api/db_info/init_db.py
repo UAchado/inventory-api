@@ -3,7 +3,12 @@ from sqlalchemy.orm import Session
 from db_info import models
 
 def init(db: Session):
-    
+    """
+    Initializes the database with initial items.
+
+    :param db: The database session
+    :type db: Session
+    """
     description = "description_opt"
     tags = {
         "auscultadoresfones": "Auscultadores/Fones",

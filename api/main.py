@@ -35,11 +35,26 @@ app.add_middleware(
     
 
 def custom_paginate(items, params: Optional[Params] = None):
+    """
+    Custom Paginate
+
+    Custom Paginate is a method used to paginate a list of items based on specific parameters.
+
+    :param items: A list of items to paginate.
+    :param params: Optional. An instance of the Params class containing pagination parameters. If not provided, default parameters will be used.
+    :return: A paginated list of items.
+
+    """
     if params is None:
         params = Params(page=1,size=len(items))
     return base_paginate(items, params)
 
 def get_db():
+    """
+    Get a database session from the SessionLocal object.
+
+    :return: A database session.
+    """
     db = database.SessionLocal()
     try:
         yield db
@@ -50,6 +65,13 @@ def get_db():
 
 @app.on_event("startup")
 async def startup_event():
+    """
+    Startup Event
+
+    This method is an event handler for the "startup" event. It initializes the database if there are no items in it.
+
+    :return: None
+    """
     db = database.SessionLocal()
     try:
         if crud.get_items(db) == []:
@@ -61,6 +83,11 @@ async def startup_event():
 
 @app.get("/inventory/v1")
 def base():
+    """
+    Root endpoint of the inventory API.
+
+    :return: A dictionary containing the response message.
+    """
     return {"response": "Hello World!"}
 
 # GET ALL ITEMS
@@ -70,6 +97,14 @@ def base():
 def get_all_items(request: Request,
                   params: Params = Depends(),
                   db: Session = Depends(get_db)) -> Page[schemas.Item]:
+    """
+    Get the list of existing items.
+
+    :param request: The request object.
+    :param params: The parameters object.
+    :param db: The database session object.
+    :return: The page containing the list of items.
+    """
     auth.verify_access(request)
     return custom_paginate(crud.get_items(db), params)
 
@@ -79,6 +114,11 @@ def get_all_items(request: Request,
          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_item_by_id(item_id: str,
                    db: Session = Depends(get_db)) -> schemas.Item:
+    """
+    :param item_id: The ID of the item to retrieve.
+    :param db: The database session to use.
+    :return: The retrieved item.
+    """
     try:
         item_id = int(item_id)
     except ValueError:
@@ -94,6 +134,12 @@ def get_item_by_id(item_id: str,
 @app.get("/inventory/v1/items/tags", response_description = "Get the list of all tags.",
          response_model = List[str], tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_all_tags() -> List[str]:
+    """
+    Get the list of all tags.
+
+    :return: A list of strings representing all the available tags.
+    :rtype: List[str]
+    """
     return ["Todos","Portáteis","Telemóveis","Tablets","Auscultadores/Fones","Carregadores",
             "Pen drives","Câmaras","Livros","Cadernos","Material de escritório","Carteiras",
             "Chaves","Cartão","Óculos","Joalharia","Casacos","Chapéus/Bonés","Cachecóis","Luvas",
@@ -106,6 +152,18 @@ def get_all_tags() -> List[str]:
           response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
 def get_stored_items(filter: schemas.InputFilter,
                      params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
+    """
+    Get currently active items by filter.
+
+    :param filter: The filter criteria used to search for items.
+    :type filter: schemas.InputFilter
+    :param params: Optional additional parameters for pagination.
+    :type params: Params
+    :param db: The database session object.
+    :type db: Session
+    :return: A paginated list of currently active items.
+    :rtype: Page[schemas.Item]
+    """
     return custom_paginate(crud.get_stored_items(db = db, filter = filter.filter), params)
 
 @app.put("/inventory/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.",
@@ -115,6 +173,20 @@ def get_dropoff_point_items(request: Request,
                             filter: schemas.InputFilter,
                             params: Params = Depends(),
                             db: Session = Depends(get_db)) -> Page[schemas.Item]:
+    """
+    :param request: The request object containing information about the current request
+    :type request: Request
+    :param dropoff_point_id: The ID of the drop-off point to get items from
+    :type dropoff_point_id: str
+    :param filter: The filtering criteria to apply when retrieving items
+    :type filter: schemas.InputFilter
+    :param params: Additional parameters for pagination
+    :type params: Params
+    :param db: The database session object
+    :type db: Session
+    :return: A paginated list of items from the drop-off point
+    :rtype: Page[schemas.Item]
+    """
     auth.verify_access(request)
     try:
         dropoff_point_id = int(dropoff_point_id)
@@ -131,6 +203,15 @@ def retrieve_item(request: Request,
                   item_id: str,
                   email: schemas.Email,
                   db: Session = Depends(get_db)) -> schemas.Item:
+    """
+    Marking a specific item as 'retrieved' by its ID.
+
+    :param request: The request object.
+    :param item_id: The ID of the item to be marked as 'retrieved'.
+    :param email: The email of the user who retrieved the item.
+    :param db: The database session.
+    :return: The retrieved item.
+    """
     auth.verify_access(request)
     try:
         item_id = int(item_id)
@@ -153,6 +234,17 @@ def create_item(request: Request,
                 image: Optional[UploadFile] = File(...),
                 dropoff_point_id: int = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
+    """
+    Create/Insert a new item.
+
+    :param request: The request object.
+    :param description: The description of the item.
+    :param tag: The tag associated with the item.
+    :param image: The image file associated with the item (optional).
+    :param dropoff_point_id: The ID of the dropoff point associated with the item.
+    :param db: The database session.
+    :return: The created item.
+    """
     auth.verify_access(request)
 
     if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
@@ -175,7 +267,15 @@ def report_item(description: str = Form(...),
                 image: Optional[UploadFile] = File(...),
                 report_email: str = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
+    """
+    :param description: A string representing the description of the item being reported.
+    :param tag: A string representing the tag associated with the item.
+    :param image: An optional UploadFile object representing the image of the item.
+    :param report_email: A string representing the email of the person reporting the item.
+    :param db: An instance of the Session class representing the database session.
+    :return: An instance of the schemas.Item class representing the newly reported item.
 
+    """
     if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         image = None
 
@@ -193,6 +293,14 @@ def report_item(description: str = Form(...),
 def delete_item(request: Request,
                 item_id: str,
                 db: Session = Depends(get_db)):
+    """
+    Delete a specific item by its ID.
+
+    :param request: The HTTP request.
+    :param item_id: The ID of the item to delete.
+    :param db: The database session.
+    :return: A dictionary containing a success message.
+    """
     auth.verify_access(request)
     try:
         item_id = int(item_id)
@@ -208,6 +316,12 @@ def delete_item(request: Request,
 @app.get("/inventory/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
             response_model = dict, tags = ["Items"], status_code = status.HTTP_200_OK)
 def get_image_from_s3(image_uuid: str):
+    """
+    Retrieve the image presigned URL from S3 Bucket B.
+
+    :param image_uuid: A string representing the unique identifier for the image.
+    :return: A dictionary containing the image's presigned URL and related information.
+    """
     return crud.get_image_from_s3(image_uuid)
 
 if __name__  == '__main__':
