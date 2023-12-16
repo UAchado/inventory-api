@@ -23,18 +23,16 @@ def contact_reported_email(db: Session, new_item: schemas.ItemCreate):
         if report.report_email not in notified_mails:
             
             subject = "O teu item foi UAchado!"
-            message = f"""
-                Um item parecido ao que reportaste acabou de ser UAchado num dos nossos pontos.\n
-                Dá uma olhada, pode ser que seja teu!\n\n
-                
-                Item: {report.tag}\n
-                Descrição: {report.description}\n\n
-        
-                na UA, nada se perde, tudo se UAcha\n\n
-                
-                Cumprimentos,\n
-                Equipa do UAchado
-            """
+            message = f"""Um item parecido ao que reportaste acabou de ser UAchado num dos nossos pontos.\n
+Dá uma olhada, pode ser que seja teu!\n\n
+
+Item: {report.tag}\n
+Descrição: {report.description}\n\n
+
+na UA, nada se perde, tudo se UAcha\n\n
+
+Cumprimentos,\n
+Equipa do UAchado"""
             send_email(report.report_email, subject, message)
 
             notified_mails.append(report.report_email)
@@ -46,21 +44,19 @@ def contact_new_report(report: schemas.ItemReport):
     :return: None
     """
     subject = "O teu report foi adicionado!"
-    message = f"""
-        O teu relatório de perda acabou de chegar ao UAchado.\n\n
-        
-        Item: {report.tag}\n
-        Descrição: {report.description}\n
-        Email: {report.report_email}\n\n
-        
-        Assim que encontrarmos um item que possa ser o teu entraremos em contacto.\n
-        Tem atenção à tua caixa de correio. O nosso mail pode ser reencaminhado para o teu spam.\n\n
-        
-        na UA, nada se perde, tudo se UAcha\n\n
-        
-        Cumprimentos,\n
-        Equipa do UAchado
-    """
+    message = f"""O teu relatório de perda acabou de chegar ao UAchado.\n\n
+
+Item: {report.tag}\n
+Descrição: {report.description}\n
+Email: {report.report_email}\n\n
+
+Assim que encontrarmos um item que possa ser o teu entraremos em contacto.\n
+Tem atenção à tua caixa de correio. O nosso mail pode ser reencaminhado para o teu spam.\n\n
+
+na UA, nada se perde, tudo se UAcha\n\n
+
+Cumprimentos,\n
+Equipa do UAchado"""
 
     send_email(report.report_email, subject, message)
 
@@ -72,22 +68,20 @@ def contact_netrieved_email(item: schemas.Item):
     :return: None
     """
     subject = "UAchaste o teu item!"
-    message = f"""
-        Acabaste de levantar um item!\n\n
-        
-        Item: {item.tag}\n
-        Descrição: {item.description}\n
-        Email: {item.retrieved_email}\n
-        Data: {item.retrieved_date[0:10]}\n\n
-        
-        Qualquer dúvida entra em contacto com a equipa do UAchado em uachado.app@gmail.com!\n\n
-        
-        Obrigado por utilizares o UAchado!\n
-        na UA, nada se perde, tudo se UAcha\n\n
-        
-        Cumprimentos,\n
-        Equipa do UAchado
-    """
+    message = f"""Acabaste de levantar um item!\n\n
+
+Item: {item.tag}\n
+Descrição: {item.description}\n
+Email: {item.retrieved_email}\n
+Data: {item.retrieved_date[0:10]}\n\n
+
+Qualquer dúvida entra em contacto com a equipa do UAchado em uachado.app@gmail.com!\n\n
+
+Obrigado por utilizares o UAchado!\n
+na UA, nada se perde, tudo se UAcha\n\n
+
+Cumprimentos,\n
+Equipa do UAchado"""
 
     send_email(item.retrieved_email, subject, message)
 
