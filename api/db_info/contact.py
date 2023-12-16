@@ -117,8 +117,8 @@ def send_email(email: str, subject: str, message: str):
             server.starttls()
             server.login(username, password)
             server.send_message(msg)
-            print(f"INFO:\t\tEMAIL SENT TO: {email}")
+            print(f"INFO:\tEMAIL SENT TO: {email}")
     except smtplib.SMTPServerDisconnected:
-        print("ERROR:\t\tServer disconnected unexpectedly.")
+        print("ERROR:\tServer disconnected unexpectedly.")
     except Exception as e:
-        print(f"ERROR:\t\t{e}")
+        print(f"ERROR:\t{e}")

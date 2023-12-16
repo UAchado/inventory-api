@@ -1,24 +1,30 @@
-import uvicorn
-import os
-import requests
-
-from jose import jwt, JWTError
+from os import getenv
 from typing import List, Optional
+
+from dotenv import load_dotenv
+from fastapi import (Depends, FastAPI, File, Form, HTTPException, Request,
+                     UploadFile, status)
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi_pagination import Page, Params
 from fastapi_pagination.paginator import paginate as base_paginate
 from fastapi_pagination.utils import disable_installed_extensions_check
-from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, status, File, Form, Request
-from dotenv import load_dotenv, dotenv_values
+from uvicorn import run
 
-ENV_FILE_PATH = os.getenv("ENV_FILE_PATH")
+ENV_FILE_PATH = getenv("ENV_FILE_PATH")
 load_dotenv(ENV_FILE_PATH)
 
-from db_info import crud, database, schemas, auth, init_db
+from db_info import auth, crud, database, init_db, schemas
+
 database.Base.metadata.create_all(bind = database.engine)
 
-app = FastAPI(title = "Inventory API", description = "This API manages the inventory's items in UAchado System", version = "1.0.0")
+app = FastAPI(title = "Inventory API",
+              summary = "Inventory API for UAchado App",
+              description = "This API manages the inventory's items in UAchado system. It helps with the logic inside the system.",
+              version = "1.0.0",
+              openapi_url = "/inventory/v1/openapi.json",
+              docs_url="/inventory/v1/docs",
+              redoc_url="/inventory/v1/redocs")
 
 invalid_id_message = "INVALID ID FORMAT"
 item_not_found_message = "ITEM NOT FOUND"
@@ -32,18 +38,20 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-    
 
-def custom_paginate(items, params: Optional[Params] = None):
+## HELPER FUNCTIONS
+
+def custom_paginate(items: List[schemas.Item],
+                    params: Optional[Params] = None) -> Page[schemas.Item]:
     """
-    Custom Paginate
+    Custom Paginate. Method used to paginate a list of items based on specific parameters.
 
-    Custom Paginate is a method used to paginate a list of items based on specific parameters.
-
-    :param items: A list of items to paginate.
-    :param params: Optional. An instance of the Params class containing pagination parameters. If not provided, default parameters will be used.
-    :return: A paginated list of items.
-
+    Args:
+        items (List[schemas.Item]): A list of items to paginate.
+        params (Optional[Params]): Optional. An instance of the Params class containing pagination parameters. If not provided, default parameters will be used.
+    
+    Return:
+        Page[schemas.Item]: A paginated list of items.
     """
     if params is None:
         params = Params(page=1,size=len(items))
@@ -51,9 +59,10 @@ def custom_paginate(items, params: Optional[Params] = None):
 
 def get_db():
     """
-    Get a database session from the SessionLocal object.
+    Get the database session from the SessionLocal object which the API can connect to.
 
-    :return: A database session.
+    Return:
+        A database session.
     """
     db = database.SessionLocal()
     try:
@@ -70,7 +79,8 @@ async def startup_event():
 
     This method is an event handler for the "startup" event. It initializes the database if there are no items in it.
 
-    :return: None
+    Return:
+        None
     """
     db = database.SessionLocal()
     try:
@@ -81,43 +91,68 @@ async def startup_event():
         
 ## ENDPOINTS
 
-@app.get("/inventory/v1")
-def base():
-    """
-    Root endpoint of the inventory API.
+# BASE (UNAUTHENTICATED USER)
 
-    :return: A dictionary containing the response message.
+@app.get("/inventory/v1",
+         response_description = "Root endpoint of the inventory API.",
+         response_model = dict,
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
+def base() -> dict:
     """
+    Root endpoint of the inventory API. Mostly used for testing API connectivity.
+
+    Returns:
+        _type_: A dictionary containing the response message.
+    """    
     return {"response": "Hello World!"}
 
-# GET ALL ITEMS
+# GET ALL ITEMS (UNAUTHENTICATED USER)
 
-@app.get("/inventory/v1/items", response_description = "Get the list of existing items.",
-         response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)
+@app.get("/inventory/v1/items", 
+         response_description = "Get the list of existing items.",
+         response_model = Page[schemas.Item],
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
 def get_all_items(request: Request,
                   params: Params = Depends(),
                   db: Session = Depends(get_db)) -> Page[schemas.Item]:
     """
     Get the list of existing items.
 
-    :param request: The request object.
-    :param params: The parameters object.
-    :param db: The database session object.
-    :return: The page containing the list of items.
-    """
+    Args:
+        request (Request): The request object containing information about the request.
+        params (Params, optional): Optional additional parameters for pagination. Defaults to Depends().
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Returns:
+        Page[schemas.Item]: The page containing the list of items.
+    """    
     auth.verify_access(request)
     return custom_paginate(crud.get_items(db), params)
 
-# GET ITEM BY ID
+# GET ITEM BY ID (UNAUTHENTICATED USER)
 
-@app.get("/inventory/v1/items/id/{item_id}", response_description = "Get a specific item by its ID.",
-         response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
+@app.get("/inventory/v1/items/id/{item_id}",
+         response_description = "Get a specific item by its ID.",
+         response_model = schemas.Item,
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
 def get_item_by_id(item_id: str,
                    db: Session = Depends(get_db)) -> schemas.Item:
     """
-    :param item_id: The ID of the item to retrieve.
-    :param db: The database session to use.
-    :return: The retrieved item.
+    Get a specific item by its ID.
+
+    Args:
+        item_id (str): The ID attribute of a specify unique item.
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException (HTTP_400_BAD_REQUEST): Error raised if item_id is not numeric.
+        HTTPException (HTTP_204_NO_CONTENT): Error raised if there's no stored item with the item_id.
+
+    Returns:
+        schemas.Item: The stored item.
     """
     try:
         item_id = int(item_id)
@@ -129,17 +164,20 @@ def get_item_by_id(item_id: str,
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
-# GET ITEM TAGS LIST
+# GET ITEM TAGS LIST (UNAUTHENTICATED USER)
 
-@app.get("/inventory/v1/items/tags", response_description = "Get the list of all tags.",
-         response_model = List[str], tags = ["Items"], status_code = status.HTTP_200_OK)
+@app.get("/inventory/v1/items/tags",
+         response_description = "Get the list of all tags.",
+         response_model = List[str],
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
 def get_all_tags() -> List[str]:
     """
-    Get the list of all tags.
+    Get the list of all tags the system currently supports.
 
-    :return: A list of strings representing all the available tags.
-    :rtype: List[str]
-    """
+    Returns:
+        List[str]: the list of strings representing all the available tags.
+    """    
     return ["Todos","Portáteis","Telemóveis","Tablets","Auscultadores/Fones","Carregadores",
             "Pen drives","Câmaras","Livros","Cadernos","Material de escritório","Carteiras",
             "Chaves","Cartão","Óculos","Joalharia","Casacos","Chapéus/Bonés","Cachecóis","Luvas",
@@ -148,45 +186,55 @@ def get_all_tags() -> List[str]:
 
 # GET ITEMS BY NOT AUTHENTICATED USER
 
-@app.post("/inventory/v1/items/stored", response_description = "Get currently active items by filter.",
-          response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
+@app.post("/inventory/v1/items/stored",
+          response_description = "Get currently 'stored' items using optional filter",
+          response_model = Page[schemas.Item],
+          tags = ["Items"],
+          status_code = status.HTTP_200_OK)
 def get_stored_items(filter: schemas.InputFilter,
-                     params: Params = Depends(), db: Session = Depends(get_db)) -> Page[schemas.Item]:
+                     params: Params = Depends(),
+                     db: Session = Depends(get_db)) -> Page[schemas.Item]:
     """
-    Get currently active items by filter.
+    Get currently 'stored' items using optional filter.
 
-    :param filter: The filter criteria used to search for items.
-    :type filter: schemas.InputFilter
-    :param params: Optional additional parameters for pagination.
-    :type params: Params
-    :param db: The database session object.
-    :type db: Session
-    :return: A paginated list of currently active items.
-    :rtype: Page[schemas.Item]
-    """
+    Args:
+        filter (schemas.InputFilter): The filter criteria used to search for items.
+        params (Params, optional): Optional additional parameters for pagination. Defaults to Depends().
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Returns:
+        Page[schemas.Item]: A paginated list of current items containing the 'stored' state.
+    """    
     return custom_paginate(crud.get_stored_items(db = db, filter = filter.filter), params)
 
-@app.put("/inventory/v1/items/point/{dropoff_point_id}", response_description = "Get items on a drop-off point by filter.",
-         response_model = Page[schemas.Item], tags = ["Items"], status_code = status.HTTP_200_OK)                                        # UAC-48
+# GET ITEMS BY AUTHENTICATED USER
+
+@app.put("/inventory/v1/items/point/{dropoff_point_id}",
+         response_description = "Get items on a drop-off point by filter.",
+         response_model = Page[schemas.Item],
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
 def get_dropoff_point_items(request: Request,
                             dropoff_point_id: str,
                             filter: schemas.InputFilter,
                             params: Params = Depends(),
                             db: Session = Depends(get_db)) -> Page[schemas.Item]:
     """
-    :param request: The request object containing information about the current request
-    :type request: Request
-    :param dropoff_point_id: The ID of the drop-off point to get items from
-    :type dropoff_point_id: str
-    :param filter: The filtering criteria to apply when retrieving items
-    :type filter: schemas.InputFilter
-    :param params: Additional parameters for pagination
-    :type params: Params
-    :param db: The database session object
-    :type db: Session
-    :return: A paginated list of items from the drop-off point
-    :rtype: Page[schemas.Item]
-    """
+    Get items on a drop-off point by filter.
+
+    Args:
+        request (Request): The request object containing information about the request.
+        dropoff_point_id (str): The ID of the drop-off point to get items from.
+        filter (schemas.InputFilter): The filter criteria used to search for items.
+        params (Params, optional): Additional parameters for pagination Defaults to Depends().
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException (HTTP_400_BAD_REQUEST): Error raised if dropoff_point_id is not numeric.
+
+    Returns:
+        Page[schemas.Item]: A paginated list of items from the drop-off point.
+    """    
     auth.verify_access(request)
     try:
         dropoff_point_id = int(dropoff_point_id)
@@ -195,10 +243,13 @@ def get_dropoff_point_items(request: Request,
     
     return custom_paginate(crud.get_dropoff_point_items(db = db, dropoff_point_id = dropoff_point_id, filter = filter.filter), params)
 
-# MARK ITEM AS RETRIEVED
+# MARK ITEM AS RETRIEVED (AUTHENTICATED USER)
 
-@app.put("/inventory/v1/items/retrieve/{item_id}", response_description = "Marking a specific item as 'retrieved' by its ID.",
-         response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_200_OK)
+@app.put("/inventory/v1/items/retrieve/{item_id}",
+         response_description = "Marking a specific item as 'retrieved' by its ID.",
+         response_model = schemas.Item,
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
 def retrieve_item(request: Request,
                   item_id: str,
                   email: schemas.Email,
@@ -206,12 +257,19 @@ def retrieve_item(request: Request,
     """
     Marking a specific item as 'retrieved' by its ID.
 
-    :param request: The request object.
-    :param item_id: The ID of the item to be marked as 'retrieved'.
-    :param email: The email of the user who retrieved the item.
-    :param db: The database session.
-    :return: The retrieved item.
-    """
+    Args:
+        request (Request): The request object containing information about the request.
+        item_id (str): The ID of the item to be marked as 'retrieved'.
+        email (schemas.Email): The email of the user who retrieved the item.
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException (HTTP_400_BAD_REQUEST): Error raised if item_id is not numeric.
+        HTTPException (HTTP_204_NO_CONTENT): Error raised if there's no stored item with the item_id.
+
+    Returns:
+        schemas.Item: The item with the updated state 'retrieved'.
+    """    
     auth.verify_access(request)
     try:
         item_id = int(item_id)
@@ -223,11 +281,13 @@ def retrieve_item(request: Request,
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return item
 
-# CREATE A NEW ITEM
+# CREATE A NEW ITEM (AUTHENTICATED USER)
 
-@app.post("/inventory/v1/items/create", response_description = "Create/Insert a new item.",
-          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
-
+@app.post("/inventory/v1/items/create",
+          response_description = "Create a new found item.",
+          response_model = schemas.Item,
+          tags = ["Items"], 
+          status_code = status.HTTP_201_CREATED)
 def create_item(request: Request,
                 description: str = Form(...),
                 tag: str = Form(...),
@@ -235,16 +295,19 @@ def create_item(request: Request,
                 dropoff_point_id: int = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
     """
-    Create/Insert a new item.
+    Create a new found item. Insert it in the database.
 
-    :param request: The request object.
-    :param description: The description of the item.
-    :param tag: The tag associated with the item.
-    :param image: The image file associated with the item (optional).
-    :param dropoff_point_id: The ID of the dropoff point associated with the item.
-    :param db: The database session.
-    :return: The created item.
-    """
+    Args:
+        request (Request): The request object containing information about the request.
+        description (str, optional): The description of the item. Defaults to Form(...).
+        tag (str, optional): The tag associated with the item. Defaults to Form(...).
+        image (Optional[UploadFile], optional): The image file associated with the item (optional). The image will be stored in the associated AWS S3 Bucket. Defaults to File(...).
+        dropoff_point_id (int, optional): The ID of the drop-off point associated with the item. Defaults to Form(...).
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Returns:
+        schemas.Item: The created item.
+    """    
     auth.verify_access(request)
 
     if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
@@ -257,25 +320,31 @@ def create_item(request: Request,
                               )
     return crud.create_item(db = db, new_item = item) 
 
-# REPORT A NEW ITEM
+# REPORT A NEW ITEM (UNAUTHENTICATED USER)
 
-@app.post("/inventory/v1/items/report", response_description = "Report a new item.",
-          response_model = schemas.Item, tags = ["Items"], status_code = status.HTTP_201_CREATED)
-
+@app.post("/inventory/v1/items/report",
+          response_description = "Report a new lost item.",
+          response_model = schemas.Item,
+          tags = ["Items"],
+          status_code = status.HTTP_201_CREATED)
 def report_item(description: str = Form(...),
                 tag: str = Form(...),
                 image: Optional[UploadFile] = File(...),
                 report_email: str = Form(...),
                 db: Session = Depends(get_db)) -> schemas.Item:
     """
-    :param description: A string representing the description of the item being reported.
-    :param tag: A string representing the tag associated with the item.
-    :param image: An optional UploadFile object representing the image of the item.
-    :param report_email: A string representing the email of the person reporting the item.
-    :param db: An instance of the Session class representing the database session.
-    :return: An instance of the schemas.Item class representing the newly reported item.
+    Report a new lost item.
 
-    """
+    Args:
+        description (str, optional): The description of the item. Defaults to Form(...).
+        tag (str, optional): The tag associated with the item. Defaults to Form(...).
+        image (Optional[UploadFile], optional): The image file associated with the item (optional). The image will be stored in the associated AWS S3 Bucket. Defaults to File(...).
+        report_email (str, optional): The email of the person reporting the item. Defaults to Form(...).
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Returns:
+        schemas.Item: The reported item.
+    """    
     if image == None or image.content_type not in ["image/jpeg", "image/png", "image/jpg"]:
         image = None
 
@@ -286,21 +355,31 @@ def report_item(description: str = Form(...),
                               )
     return crud.report_item(db = db, new_item = item)
 
-# DELETE EXISTING ITEM
+# DELETE EXISTING ITEM (AUTHENTICATED USER)
 
-@app.delete("/inventory/v1/items/id/{item_id}", response_description = "Delete a specific item by its ID.",
-            tags = ["Items"], status_code = status.HTTP_200_OK)
+@app.delete("/inventory/v1/items/id/{item_id}",
+            response_description = "Delete a specific item by its ID.",
+            response_model = dict,
+            tags = ["Items"],
+            status_code = status.HTTP_200_OK)
 def delete_item(request: Request,
                 item_id: str,
                 db: Session = Depends(get_db)):
     """
     Delete a specific item by its ID.
 
-    :param request: The HTTP request.
-    :param item_id: The ID of the item to delete.
-    :param db: The database session.
-    :return: A dictionary containing a success message.
-    """
+    Args:
+        request (Request): The request object containing information about the request.
+        item_id (str): The ID of the item to be deleted.
+        db (Session, optional): Optional database session object. If not included the system will connect to the default one. Defaults to Depends(get_db).
+
+    Raises:
+        HTTPException (HTTP_400_BAD_REQUEST): Error raised if item_id is not numeric.
+        HTTPException (HTTP_204_NO_CONTENT): Error raised if there's no stored item with the item_id.
+
+    Returns:
+        _type_: A dictionary containing a success message.
+    """    
     auth.verify_access(request)
     try:
         item_id = int(item_id)
@@ -311,18 +390,23 @@ def delete_item(request: Request,
         raise HTTPException(status_code = status.HTTP_204_NO_CONTENT, detail = item_not_found_message)
     return {"message": "ITEM DELETED"}
 
-# GET IMAGE FROM S3 BUCKET
+# GET IMAGE FROM S3 BUCKET (UNAUTHENTICATED USER)
 
-@app.get("/inventory/v1/image/{image_uuid}", response_description = "Return the image presigned url from S3 Bucket B.",
-            response_model = dict, tags = ["Items"], status_code = status.HTTP_200_OK)
+@app.get("/inventory/v1/image/{image_uuid}",
+         response_description = "A StreamingResponse object containing the image data.",
+         tags = ["Items"],
+         status_code = status.HTTP_200_OK)
 def get_image_from_s3(image_uuid: str):
     """
     Retrieve the image presigned URL from S3 Bucket B.
 
-    :param image_uuid: A string representing the unique identifier for the image.
-    :return: A dictionary containing the image's presigned URL and related information.
-    """
+    Args:
+        image_uuid (str): A string representing the unique identifier for the image.
+
+    Returns:
+        StreamingResponse: Object containing the image data.
+    """    
     return crud.get_image_from_s3(image_uuid)
 
 if __name__  == '__main__':
-    uvicorn.run(app, host = '0.0.0.0', port = 8000)
+    run(app, host = '0.0.0.0', port = 8000)

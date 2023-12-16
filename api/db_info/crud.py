@@ -41,10 +41,10 @@ def upload_file_to_s3(file, s3_file_name):
         s3.upload_fileobj(file.file, bucket_name, s3_file_name)
         return s3_file_name
     except FileNotFoundError:
-        print("ERROR:\t\tFileNotFoundError")
+        print("ERROR:\tFileNotFoundError")
         return None
     except NoCredentialsError:
-        print("ERROR:\t\tNoCredentialsError")
+        print("ERROR:\tNoCredentialsError")
         return None
     except Exception:
         return None
@@ -61,10 +61,10 @@ def delete_file_from_s3(s3_file_name):
         s3.delete_object(Bucket=os.getenv('AWS_BUCKET_NAME'), Key=s3_file_name)
         return True
     except Exception:
-        print("ERROR:\t\tException")
+        print("ERROR:\tException")
         return False
 
-def get_image_from_s3(uuid: str):
+def get_image_from_s3(uuid: str) -> StreamingResponse:
     """
     Get an image from Amazon S3.
 
