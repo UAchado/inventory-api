@@ -60,3 +60,12 @@ jobs:
         docker build -t $ECR_REPOSITORY:$IMAGE_TAG -f Dockerfile.prod .
         docker push $ECR_REPOSITORY:$IMAGE_TAG
         echo "$ECR_REPOSITORY:$IMAGE_TAG"
+
+    - name: Trigger CD Pipeline
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.ACTIONS_PAT }}
+        repository: UAchado/control-room
+        event-type: update-inventory-service
+       
+  
