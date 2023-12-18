@@ -24,7 +24,7 @@ def contact_reported_email(db: Session, new_item: schemas.ItemCreate):
             
             subject = "O teu item foi UAchado!"
             message = f"""Um item parecido ao que reportaste acabou de ser UAchado num dos nossos pontos.\n
-Dá uma olhada, pode ser que seja teu!\n\n
+Dá uma olhada, pode ser que seja teu em https://uachado.pt/findItems !\n\n
 
 Item: {report.tag}\n
 Descrição: {report.description}\n\n
@@ -51,6 +51,7 @@ Descrição: {report.description}\n
 Email: {report.report_email}\n\n
 
 Assim que encontrarmos um item que possa ser o teu entraremos em contacto.\n
+Vai vendo a nossa aplicação em https://uachado.pt/findItems para veres se algum item é parecido ao teu.\n
 Tem atenção à tua caixa de correio. O nosso mail pode ser reencaminhado para o teu spam.\n\n
 
 na UA, nada se perde, tudo se UAcha\n\n
@@ -75,7 +76,7 @@ Descrição: {item.description}\n
 Email: {item.retrieved_email}\n
 Data: {item.retrieved_date[0:10]}\n\n
 
-Qualquer dúvida entra em contacto com a equipa do UAchado em uachado.app@gmail.com!\n\n
+Qualquer dúvida entra em contacto com a equipa do UAchado em uachadomachado@gmail.com!\n\n
 
 Obrigado por utilizares o UAchado!\n
 na UA, nada se perde, tudo se UAcha\n\n
